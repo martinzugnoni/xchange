@@ -7,4 +7,4 @@ python:
 install:
   - pip install -r requirements/dev.txt
 script:
-  - py.test --cov=xchange tests/
+  - python setup.py test
