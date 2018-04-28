@@ -1,0 +1,2 @@
+requests==2.18.4
+cached-property==1.4.2
