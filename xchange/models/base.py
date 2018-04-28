@@ -98,7 +98,7 @@ class BaseExchangeModel(dict):
     schema = {}
 
     def __init__(self, json_response):
-        super().__init__()
+        super(BaseExchangeModel, self).__init__()
         parsed_response = self.normalize_response(json_response)
         self.assign_dynamic_attributes(parsed_response)
 

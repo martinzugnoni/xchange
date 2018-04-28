@@ -14,7 +14,7 @@ from xchange.models.bitfinex import (
 
 class BaseBitfinexClientTestCase(BaseXchangeTestCase):
     def setUp(self):
-        super().setUp()
+        super(BaseBitfinexClientTestCase, self).setUp()
         self.ClientClass = ExchangeClientFactory.get_client(exchanges.BITFINEX)
         self.client = self.ClientClass('API_KEY', 'API_SECRET')
 

@@ -12,7 +12,7 @@ from xchange.models.okex import (
 
 class BaseOkexClientTestCase(BaseXchangeTestCase):
     def setUp(self):
-        super().setUp()
+        super(BaseOkexClientTestCase, self).setUp()
         self.ClientClass = ExchangeClientFactory.get_client(exchanges.OKEX)
         self.client = self.ClientClass('API_KEY', 'API_SECRET')
 
@@ -88,7 +88,9 @@ class OkexClientAccountBalanceTestCase(BaseOkexClientTestCase):
             {'amount': Decimal('0.01645887000000000044419579126042663119733333587646484375'), 'symbol': 'btc'},
             {'amount': Decimal('0'), 'symbol': 'ltc'}
         ]
-        self.assertEqual(balance, expected)
+        self.assertEqual(
+            sorted(balance, key=lambda x: x['symbol']),
+            sorted(expected, key=lambda x: x['symbol']))
         self.assertEqual(type(balance), list)
         for obj in balance:
             self.assertEqual(type(obj), OkexAccountBalance)
