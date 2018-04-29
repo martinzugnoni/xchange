@@ -45,7 +45,7 @@ FIXTURE_RESPONSES = [
     },
     {
         'method': 'POST',
-        'url_regex': 'https://www\.okex\.com/api/v1/future_userinfo\.do\?api_key=\w+&sign=\w+',
+        'url_regex': 'https://www\.okex\.com/api/v1/future_userinfo\.do\?\w+',
         'status': 200,
         'content_type': 'application/json',
         'json': {
