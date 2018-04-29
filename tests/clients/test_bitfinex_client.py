@@ -47,7 +47,7 @@ class BitfinexClientTickerTestCase(BaseBitfinexClientTestCase):
     @responses.activate
     def test_get_ticker_invalid_symbol_pair(self):
         with self.assertRaisesRegexp(InvalidSymbolPairException,
-                                     'Given symbol pair "usd_usd" is not valid'):
+                                     'Given symbol pair "usd_usd" is invalid, use'):
             self.client.get_ticker('usd_usd')
 
 
@@ -90,7 +90,7 @@ class BitfinexClientAccountBalanceTestCase(BaseBitfinexClientTestCase):
             self.assertEqual(type(obj), BitfinexAccountBalance)
 
 
-class BitfinexOpenOrdersTestCase(BaseBitfinexClientTestCase):
+class BitfinexGetOpenOrdersTestCase(BaseBitfinexClientTestCase):
 
     @responses.activate
     def test_get_open_orders(self):
@@ -224,3 +224,72 @@ class BitfinexOpenOrdersTestCase(BaseBitfinexClientTestCase):
         open_orders = self.client.get_open_orders(currencies.BTC_USD)
         self.assertEqual(type(open_orders), list)
         self.assertEqual(open_orders, [])
+
+
+class BitfinexOpenOrderTestCase(BaseBitfinexClientTestCase):
+
+    @responses.activate
+    def test_open_order(self):
+        fixture = {
+            'avg_execution_price': '0.0',
+            'cid': 77112547681,
+            'cid_date': '2017-08-20',
+            'exchange': 'bitfinex',
+            'executed_amount': '0.0',
+            'gid': None,
+            'id': 3438135637,
+            'is_cancelled': False,
+            'is_hidden': False,
+            'is_live': True,
+            'oco_order': None,
+            'order_id': 3434679437,
+            'original_amount': '0.01209215',
+            'price': '4118.0',
+            'remaining_amount': '0.01209215',
+            'side': 'sell',
+            'src': 'api',
+            'symbol': 'btcusd',
+            'timestamp': '1503225464.317116079',
+            'type': 'limit',
+            'was_forced': False
+        }
+        responses.add(
+            method='POST',
+            url=re.compile('https://api.bitfinex.com/v1/order/new'),
+            json=fixture,
+            status=200,
+            content_type='application/json')
+        order = self.client.open_order(
+            action=exchanges.SELL,
+            amount='0.01209215',
+            symbol_pair=currencies.BTC_USD,
+            price='4118.0',
+            order_type=exchanges.LIMIT)
+        expected = {
+            'id': '3438135637',
+            'action': 'sell',
+            'amount': Decimal('0.01209215'),
+            'price': Decimal('4118.0'),
+            'status': 'open',
+            'symbol_pair': 'btc_usd',
+            'type': 'limit'
+        }
+        self.assertEqual(order, expected)
+        self.assertEqual(type(order), BitfinexOrder)
+
+    @responses.activate
+    def test_open_order_bad_request(self):
+        fixture = {'message': 'Key price should be a decimal string.'}
+        responses.add(
+            method='POST',
+            url=re.compile('https://api.bitfinex.com/v1/order/new'),
+            json=fixture,
+            status=400,
+            content_type='application/json')
+        with self.assertRaisesRegexp(BitfinexException, 'Got 400 response with content:'):
+            self.client.open_order(
+                action=exchanges.SELL,
+                amount='0.01209215',
+                symbol_pair=currencies.BTC_USD,
+                price=True,  # won't work
+                order_type=exchanges.LIMIT)

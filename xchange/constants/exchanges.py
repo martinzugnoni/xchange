@@ -9,3 +9,17 @@ EXCHANGES = [
     KRAKEN,
     BITSTAMP,
 ]
+
+BUY = 'buy'
+SELL = 'sell'
+ACTIONS = [
+    BUY,
+    SELL
+]
+
+LIMIT = 'limit'
+MARKET = 'market'
+ORDER_TYPES = [
+    LIMIT,
+    MARKET
+]

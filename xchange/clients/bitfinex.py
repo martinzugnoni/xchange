@@ -89,9 +89,12 @@ class BitfinexClient(BaseExchangeClient):
         return [order for order in data
                 if order['symbol_pair'] == symbol_pair]
 
+    @decorators.is_valid_argument('action')
+    @decorators.is_valid_argument('symbol_pair', arg_position=2)
+    @decorators.is_valid_argument('order_type', arg_position=4)
     def open_order(self, action, amount, symbol_pair, price, order_type):
         path = '/v1/order/new'
-        symbol_pair = self.SYMBOLS[symbol_pair]
+        symbol_pair = self.SYMBOLS_MAPPING[symbol_pair]
         payload = {
             'request': path,
             'nonce': str(time.time()),

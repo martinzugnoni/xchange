@@ -1,13 +1,20 @@
 
 class BaseXchangeException(Exception):
     pass
-
-
+    
 class InvalidSymbolException(BaseXchangeException):
     pass
 
 
 class InvalidSymbolPairException(BaseXchangeException):
+    pass
+
+
+class InvalidActionException(BaseXchangeException):
+    pass
+
+
+class InvalidOrderTypeException(BaseXchangeException):
     pass
 
 # exchange exceptions

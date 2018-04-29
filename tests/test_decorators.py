@@ -1,7 +1,7 @@
 from tests import BaseXchangeTestCase
 from xchange.decorators import is_valid_argument
-from xchange.constants import currencies
-from xchange.exceptions import InvalidSymbolPairException
+from xchange.constants import currencies, exchanges
+from xchange.exceptions import *
 
 
 class IsValidArgumentDecoratorTestCase(BaseXchangeTestCase):
@@ -41,3 +41,27 @@ class IsValidArgumentDecoratorTestCase(BaseXchangeTestCase):
         f.bar(None, None, symbol_pair=currencies.BTC_USD)
         with self.assertRaises(InvalidSymbolPairException):
             f.bar(None, None, symbol_pair='usd_usd')
+
+    def test_valid_action(self):
+        """Should validate `action` argument properly"""
+        class Foo:
+            @is_valid_argument('action')
+            def bar(self, action):
+                pass
+
+        f = Foo()
+        f.bar(exchanges.BUY)
+        with self.assertRaises(InvalidActionException):
+            f.bar('buysell')
+
+    def test_valid_order_type(self):
+        """Should validate `action` argument properly"""
+        class Foo:
+            @is_valid_argument('order_type')
+            def bar(self, action):
+                pass
+
+        f = Foo()
+        f.bar(exchanges.LIMIT)
+        with self.assertRaises(InvalidOrderTypeException):
+            f.bar('limitmarket')
