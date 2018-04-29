@@ -29,6 +29,11 @@ class InvalidOrderTypeException(BaseXchangeException):
 class InvalidAmountContractsException(BaseXchangeException):
     pass
 
+
+class InsufficientMarketDepth(BaseXchangeException):
+    pass
+
+
 # exchange exceptions
 
 class BitfinexException(BaseXchangeException):
