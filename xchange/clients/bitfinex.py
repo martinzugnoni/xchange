@@ -159,19 +159,6 @@ class BitfinexClient(BaseExchangeClient):
                           model_class=BitfinexOrder)
 
     def close_all_positions(self, symbol_pair):
-        positions = yield Task(self.get_open_positions, symbol_pair=symbol_pair)
-        if not positions:
-            return
-        for position in positions:
-            self.close_position(
-                action=position.action,
-                amount=str(position.amount),
-                symbol_pair=position.symbol_pair,
-                price=str(position.price),
-                order_type='market'
-            )
-
-    def close_all_positions_sync(self, symbol_pair):
         positions = self.get_open_positions(symbol_pair=symbol_pair)
         if not positions:
             return

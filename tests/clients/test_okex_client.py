@@ -7,7 +7,7 @@ from tests.fixtures import okex
 from xchange.factories import ExchangeClientFactory
 from xchange.constants import exchanges, currencies
 from xchange.models.okex import (
-    OkexTicker, OkexOrderBook, OkexAccountBalance)
+    OkexTicker, OkexOrderBook, OkexAccountBalance, OkexOrder)
 
 
 class BaseOkexClientTestCase(BaseXchangeTestCase):
@@ -94,3 +94,126 @@ class OkexClientAccountBalanceTestCase(BaseOkexClientTestCase):
         self.assertEqual(type(balance), list)
         for obj in balance:
             self.assertEqual(type(obj), OkexAccountBalance)
+
+
+class OkexOpenOrdersTestCase(BaseOkexClientTestCase):
+
+    @responses.activate
+    def test_get_open_orders(self):
+        fixture = {
+            'orders': [
+                {
+                    'amount': 1,
+                    'contract_name': 'BTC0929',
+                    'create_date': 1503614569000,
+                    'deal_amount': 0,
+                    'fee': 0,
+                    'lever_rate': 10,
+                    'order_id': 8934112485,
+                    'price': 5000,
+                    'price_avg': 0,
+                    'status': 0,
+                    'symbol': 'btc_usd',
+                    'type': 2,
+                    'unit_amount': 100
+                }
+            ],
+            'result': True
+        }
+        responses.add(
+            method='POST',
+            url=re.compile('https://www\.okex\.com/api/v1/future_order_info\.do'),
+            json=fixture,
+            status=200,
+            content_type='application/json')
+        open_orders = self.client.get_open_orders(currencies.BTC_USD)
+        expected = [
+            {
+                'id': '8934112485',
+                'action': 'sell',
+                'amount': Decimal('1'),
+                'price': Decimal('5000'),
+                'status': 'open',
+                'symbol_pair': 'btc_usd',
+                'type': 'limit'
+            }
+        ]
+        self.assertEqual(type(open_orders), list)
+        for obj in open_orders:
+            self.assertEqual(type(obj), OkexOrder)
+        self.assertEqual(open_orders, expected)
+
+    @responses.activate
+    def test_get_open_orders_filters_by_symbol_pair(self):
+        fixture = {
+            'orders': [
+                {
+                    'amount': 1,
+                    'contract_name': 'BTC0929',
+                    'create_date': 1503614569000,
+                    'deal_amount': 0,
+                    'fee': 0,
+                    'lever_rate': 10,
+                    'order_id': 8934112485,
+                    'price': 5000,
+                    'price_avg': 0,
+                    'status': 0,
+                    'symbol': 'btc_usd',
+                    'type': 2,
+                    'unit_amount': 100
+                },
+                {
+                    'amount': 1,
+                    'contract_name': 'ETH0929',
+                    'create_date': 1503614569000,
+                    'deal_amount': 0,
+                    'fee': 0,
+                    'lever_rate': 10,
+                    'order_id': 8934112485,
+                    'price': 5000,
+                    'price_avg': 0,
+                    'status': 0,
+                    'symbol': 'eth_usd',
+                    'type': 2,
+                    'unit_amount': 100
+                },
+            ],
+            'result': True
+        }
+        responses.add(
+            method='POST',
+            url=re.compile('https://www\.okex\.com/api/v1/future_order_info\.do'),
+            json=fixture,
+            status=200,
+            content_type='application/json')
+        open_orders = self.client.get_open_orders(currencies.ETH_USD)
+        expected = [
+            {
+                'id': '8934112485',
+                'action': 'sell',
+                'amount': Decimal('1'),
+                'price': Decimal('5000'),
+                'status': 'open',
+                'symbol_pair': 'eth_usd',
+                'type': 'limit'
+            }
+        ]
+        self.assertEqual(type(open_orders), list)
+        self.assertEqual(len(open_orders), 1)
+        for obj in open_orders:
+            self.assertEqual(type(obj), OkexOrder)
+        self.assertEqual(open_orders, expected)
+
+    @responses.activate
+    def test_get_open_orders_no_open_orders(self):
+        fixture = {'orders': [], 'result': True}
+        responses.add(
+            method='POST',
+            url=re.compile('https://www\.okex\.com/api/v1/future_order_info\.do'),
+            json=fixture,
+            status=200,
+            content_type='application/json')
+        open_orders = self.client.get_open_orders(currencies.BTC_USD)
+        self.assertEqual(type(open_orders), list)
+        self.assertEqual(len(open_orders), 0)
+        self.assertEqual(open_orders, [])

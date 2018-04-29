@@ -182,9 +182,10 @@ class OkexClient(BaseExchangeClient):
                           transformation=self._transform_account_balance,
                           model_class=OkexAccountBalance)
 
+    @decorators.is_valid_argument('symbol_pair')
     def get_open_orders(self, symbol_pair):
         path = '/v1/future_order_info.do'
-        symbol_pair = self.SYMBOLS[symbol_pair]
+        symbol_pair = self.SYMBOLS_MAPPING[symbol_pair]
         params = {
             'symbol': symbol_pair,
             'contract_type': 'quarter',
@@ -195,9 +196,11 @@ class OkexClient(BaseExchangeClient):
         }
         params['api_key'] = self.api_key
         params['sign'] = self._sign_params(params)
-        return self._post(path, params=params,
+        data = self._post(path, params=params,
                           transformation=self._transform_open_orders,
                           model_class=OkexOrder)
+        return [order for order in data
+                if order['symbol_pair'] == symbol_pair]
 
     def open_order(self, action, amount, symbol_pair, price, order_type,
                    amount_in_contracts=None):
@@ -244,28 +247,10 @@ class OkexClient(BaseExchangeClient):
 
     def cancel_all_orders(self, symbol_pair):
         symbol_pair = self.SYMBOLS[symbol_pair]
-        orders = yield Task(self.get_open_orders, symbol_pair=symbol_pair)
-        if not orders:
-            return
-        order_ids = ','.join([order.id for order in orders])
-        log.info('{}'.format(order_ids))
-        path = '/v1/future_cancel.do'
-        params = {
-            'symbol': symbol_pair,
-            'contract_type': 'quarter',
-            'order_id': order_ids,
-        }
-        params['api_key'] = self.api_key
-        params['sign'] = self._sign_params(params)
-        yield self._post(path, params=params)
-
-    def cancel_all_orders_sync(self, symbol_pair):
-        symbol_pair = self.SYMBOLS[symbol_pair]
         orders = self.get_open_orders(symbol_pair=symbol_pair)
         if not orders:
             return
         order_ids = ','.join([order.id for order in orders])
-        log.info('{}'.format(order_ids))
         path = '/v1/future_cancel.do'
         params = {
             'symbol': symbol_pair,
@@ -318,20 +303,6 @@ class OkexClient(BaseExchangeClient):
         return self._post(path, params=params)
 
     def close_all_positions(self, symbol_pair):
-        positions = yield Task(self.get_open_positions, symbol_pair=symbol_pair)
-        if not positions:
-            return
-        for position in positions:
-            self.close_position(
-                action=position.action,
-                amount=None,
-                amount_in_contracts=str(position.amount),
-                symbol_pair=position.symbol_pair,
-                price=str(position.price),
-                order_type='market'
-            )
-
-    def close_all_positions_sync(self, symbol_pair):
         positions = self.get_open_positions(symbol_pair=symbol_pair)
         if not positions:
             return
