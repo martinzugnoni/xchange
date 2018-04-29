@@ -4,13 +4,13 @@ import json
 import base64
 import hashlib
 
+from xchange import exceptions
+from xchange import decorators
+from xchange.constants import currencies, exchanges
 from xchange.clients.base import BaseExchangeClient
 from xchange.models.bitfinex import (
     BitfinexOrderBook, BitfinexAccountBalance, BitfinexOrder, BitfinexTicker,
     BitfinexPosition)
-from xchange.constants import currencies
-from xchange import decorators
-from xchange import exceptions
 
 
 class BitfinexClient(BaseExchangeClient):
@@ -90,7 +90,9 @@ class BitfinexClient(BaseExchangeClient):
                 if order['symbol_pair'] == symbol_pair]
 
     @decorators.is_valid_argument('action')
+    @decorators.is_valid_argument('amount', arg_position=1)
     @decorators.is_valid_argument('symbol_pair', arg_position=2)
+    @decorators.is_valid_argument('price', arg_position=3)
     @decorators.is_valid_argument('order_type', arg_position=4)
     def open_order(self, action, amount, symbol_pair, price, order_type):
         path = '/v1/order/new'
@@ -119,17 +121,21 @@ class BitfinexClient(BaseExchangeClient):
         signed_payload = self._sign_payload(payload)
         return self._post(path, headers=signed_payload)
 
+    @decorators.is_valid_argument('symbol_pair')
     def cancel_all_orders(self, symbol_pair):
-        path = '/v1/order/cancel/all'
+        path = '/v1/order/cancel/multi'
+        orders = self.get_open_orders(symbol_pair=symbol_pair)
+        if not orders:
+            return
         payload = {
             'request': path,
             'nonce': str(time.time()),
+            'orders': [order.id for order in orders]
         }
         signed_payload = self._sign_payload(payload)
         return self._post(path, headers=signed_payload)
 
-    cancel_all_orders_sync = cancel_all_orders
-
+    @decorators.is_valid_argument('symbol_pair')
     def get_open_positions(self, symbol_pair):
         path = '/v1/positions'
         payload = {
@@ -137,16 +143,23 @@ class BitfinexClient(BaseExchangeClient):
             'nonce': str(time.time()),
         }
         signed_payload = self._sign_payload(payload)
-        return self._post(path, headers=signed_payload,
-                          model_class=BitfinexPosition)
+        positions = self._post(path, headers=signed_payload,
+                               model_class=BitfinexPosition)
+        return [pos for pos in positions
+                if pos['symbol_pair'] == symbol_pair]
 
+    @decorators.is_valid_argument('action')
+    @decorators.is_valid_argument('amount', arg_position=1)
+    @decorators.is_valid_argument('symbol_pair', arg_position=2)
+    @decorators.is_valid_argument('price', arg_position=3)
+    @decorators.is_valid_argument('order_type', arg_position=4)
     def close_position(self, action, amount, symbol_pair, price, order_type):
         path = '/v1/order/new'
-        symbol_pair = self.SYMBOLS[symbol_pair]
+        symbol_pair = self.SYMBOLS_MAPPING[symbol_pair]
 
         # as we want to close the possition,
         # we need to performe the opposite action to the given one.
-        action = 'sell' if action == 'buy' else 'buy'
+        action = exchanges.SELL if action == exchanges.BUY else exchanges.BUY
 
         payload = {
             'request': path,
@@ -161,6 +174,7 @@ class BitfinexClient(BaseExchangeClient):
         return self._post(path, headers=signed_payload,
                           model_class=BitfinexOrder)
 
+    @decorators.is_valid_argument('symbol_pair')
     def close_all_positions(self, symbol_pair):
         positions = self.get_open_positions(symbol_pair=symbol_pair)
         if not positions:
