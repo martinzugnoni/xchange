@@ -76,16 +76,18 @@ class BitfinexClient(BaseExchangeClient):
                           transformation=self._transform_account_balance,
                           model_class=BitfinexAccountBalance)
 
+    @decorators.is_valid_argument('symbol_pair')
     def get_open_orders(self, symbol_pair):
-        # FIXME: we should filter only orders of `symbol_pair`
         path = '/v1/orders'
         payload = {
             'request': path,
             'nonce': str(time.time())
         }
         signed_payload = self._sign_payload(payload)
-        return self._post(path, headers=signed_payload,
+        data = self._post(path, headers=signed_payload,
                           model_class=BitfinexOrder)
+        return [order for order in data
+                if order['symbol_pair'] == symbol_pair]
 
     def open_order(self, action, amount, symbol_pair, price, order_type):
         path = '/v1/order/new'

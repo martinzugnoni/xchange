@@ -8,7 +8,7 @@ from xchange import exceptions
 def _validate_symbol_pair(value):
     if not value in currencies.SYMBOL_PAIRS:
         raise exceptions.InvalidSymbolPairException(
-            'Given symbol pair "{}" is not valid'.format(symbol))
+            'Given symbol pair "{}" is not valid'.format(value))
 
 
 def is_valid_argument(arg_name, arg_position=0):
