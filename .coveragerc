@@ -1,0 +1,2 @@
+[run]
+omit = xchange/__init__.py
