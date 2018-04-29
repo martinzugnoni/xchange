@@ -126,15 +126,20 @@ class OkexOrder(Order):
      'unit_amount': 100}
     """
     def normalize_response(self, json_response):
-        return {
-            'id': json_response['order_id'],
+        order = {
+            'id': json_response['order_id']
+        }
+        keys = ['type', 'amount', 'price', 'symbol', 'status']
+        if all([k in json_response for k in keys]):
+            order.update({
             'action': self.ORDER_TYPE[json_response['type']],
             'amount': json_response['amount'],
             'price': json_response['price'],
             'symbol_pair': json_response['symbol'],
             'type': 'limit',
             'status': self.ORDER_STATUS[json_response['status']]
-        }
+        })
+        return order
 
 
 class OkexPosition(Position):

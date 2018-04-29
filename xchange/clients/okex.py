@@ -4,13 +4,13 @@ from decimal import Decimal
 
 from cached_property import cached_property_with_ttl
 
+from xchange import exceptions
+from xchange import decorators
+from xchange.constants import currencies, exchanges
 from xchange.clients.base import BaseExchangeClient
 from xchange.models.base import crypto_to_contracts
 from xchange.models.okex import (
     OkexTicker, OkexOrderBook, OkexAccountBalance, OkexOrder, OkexPosition)
-from xchange import exceptions
-from xchange.constants import currencies
-from xchange import decorators
 
 
 class OkexClient(BaseExchangeClient):
@@ -202,22 +202,49 @@ class OkexClient(BaseExchangeClient):
         return [order for order in data
                 if order['symbol_pair'] == symbol_pair]
 
+    @decorators.is_valid_argument('action')
+    @decorators.is_valid_argument('amount', arg_position=1)
+    @decorators.is_valid_argument('symbol_pair', arg_position=2)
+    @decorators.is_valid_argument('price', arg_position=3)
+    @decorators.is_valid_argument('order_type', arg_position=4)
+    @decorators.is_valid_argument('amount_in_contracts')
     def open_order(self, action, amount, symbol_pair, price, order_type,
-                   amount_in_contracts=None):
+                   amount_in_contracts=False):
+        """
+        Creates a new Order.
+
+        :action:
+            exchanges.ACTIONS choice
+        :amount:
+            Decimal, float, integer or string representing number value.
+            If `amount_in_contracts == True`, `amount` needs to be an integer number.
+        :symbol_pair:
+            currencies.SYMBOL_PAIRS choice
+        :price:
+            Decimal, float, integer or string representing number value.
+        :order_type:
+            exchanges.ORDER_TYPES choice
+        :amount_in_contracts:
+            (True|False) Whether the `amount`  argument is expressed in cryptos or contracts
+        """
         path = '/v1/future_trade.do'
-        symbol_pair = self.SYMBOLS[symbol_pair]
+        symbol_pair = self.SYMBOLS_MAPPING[symbol_pair]
         action = (self.ACTION['open_short']
-                  if action == 'sell'
+                  if action == exchanges.SELL
                   else self.ACTION['open_long'])
 
-        amount_in_contracts = (
-            amount_in_contracts or
-            crypto_to_contracts(amount,
-                                getattr(self, '{}_ticker'.format(symbol_pair)).last,
-                                self.CONTRACT_UNIT_AMOUNTS[symbol_pair]))
-        # FIXME: this should not happen with greater amounts
-        if amount_in_contracts < 1:
-            amount_in_contracts = Decimal('1.0')
+        if amount_in_contracts:
+            # validate amount expressed in contracts is valid
+            amount = int(float(amount))
+            if amount < 1:
+                raise exceptions.InvalidAmountException(
+                    'Given amount of contracts "{}" is invalid, '
+                    'use positive int greater or equal than 1'.format(amount))
+        else:
+            amount = crypto_to_contracts(
+                amount,
+                getattr(self, '{}_ticker'.format(symbol_pair)).last,
+                self.CONTRACT_UNIT_AMOUNTS[symbol_pair])
 
         match_price = 1 if order_type == 'market' else 0
         params = {
@@ -225,13 +252,13 @@ class OkexClient(BaseExchangeClient):
             'contract_type': 'quarter',
             'price': float(Decimal(price)),
             'match_price': match_price,  # if market, 'price' field is ignored
-            'amount': int(amount_in_contracts),
+            'amount': int(amount),  # in contracts
             'type': action,
             'lever_rate': 10,  # default
         }
         params['api_key'] = self.api_key
         params['sign'] = self._sign_params(params)
-        return self._post(path, params=params)
+        return self._post(path, params=params, model_class=OkexOrder)
 
     def cancel_order(self, order_id):
         # FIXME: don't hardcode btc_usd here

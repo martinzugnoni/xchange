@@ -1,7 +1,7 @@
 
 class BaseXchangeException(Exception):
     pass
-    
+
 class InvalidSymbolException(BaseXchangeException):
     pass
 
@@ -14,7 +14,19 @@ class InvalidActionException(BaseXchangeException):
     pass
 
 
+class InvalidAmountException(BaseXchangeException):
+    pass
+
+
+class InvalidPriceException(BaseXchangeException):
+    pass
+
+
 class InvalidOrderTypeException(BaseXchangeException):
+    pass
+
+
+class InvalidAmountContractsException(BaseXchangeException):
     pass
 
 # exchange exceptions

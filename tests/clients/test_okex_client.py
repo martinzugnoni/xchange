@@ -4,6 +4,7 @@ from decimal import Decimal
 
 from tests import BaseXchangeTestCase
 from tests.fixtures import okex
+from xchange.exceptions import *
 from xchange.factories import ExchangeClientFactory
 from xchange.constants import exchanges, currencies
 from xchange.models.okex import (
@@ -96,7 +97,7 @@ class OkexClientAccountBalanceTestCase(BaseOkexClientTestCase):
             self.assertEqual(type(obj), OkexAccountBalance)
 
 
-class OkexOpenOrdersTestCase(BaseOkexClientTestCase):
+class OkexGetOpenOrdersTestCase(BaseOkexClientTestCase):
 
     @responses.activate
     def test_get_open_orders(self):
@@ -217,3 +218,68 @@ class OkexOpenOrdersTestCase(BaseOkexClientTestCase):
         self.assertEqual(type(open_orders), list)
         self.assertEqual(len(open_orders), 0)
         self.assertEqual(open_orders, [])
+
+
+class OkexOpenOrderTestCase(BaseOkexClientTestCase):
+
+    @responses.activate
+    def test_open_order(self):
+        fixture = {'order_id': 8931546905, 'result': True}
+        responses.add(
+            method='POST',
+            url=re.compile('https://www\.okex\.com/api/v1/future_trade\.do'),
+            json=fixture,
+            status=200,
+            content_type='application/json')
+        order = self.client.open_order(
+            action=exchanges.SELL,
+            amount='0.01209215',
+            symbol_pair=currencies.BTC_USD,
+            price='4118.0',
+            order_type=exchanges.LIMIT)
+        expected = {
+            'id': '8931546905'
+        }
+        self.assertEqual(order, expected)
+        self.assertEqual(type(order), OkexOrder)
+
+    @responses.activate
+    def test_open_order_amount_in_contracts(self):
+        fixture = {'order_id': 8931458965, 'result': True}
+        responses.add(
+            method='POST',
+            url=re.compile('https://www\.okex\.com/api/v1/future_trade\.do'),
+            json=fixture,
+            status=200,
+            content_type='application/json')
+        order = self.client.open_order(
+            action=exchanges.SELL,
+            amount='2.0',
+            amount_in_contracts=True,
+            symbol_pair=currencies.BTC_USD,
+            price='4118.0',
+            order_type=exchanges.LIMIT)
+        expected = {
+            'id': '8931458965'
+        }
+        self.assertEqual(order, expected)
+        self.assertEqual(type(order), OkexOrder)
+
+    @responses.activate
+    def test_open_order_amount_in_contracts_too_small(self):
+        fixture = {'order_id': 8931458965, 'result': True}
+        responses.add(
+            method='POST',
+            url=re.compile('https://www\.okex\.com/api/v1/future_trade\.do'),
+            json=fixture,
+            status=200,
+            content_type='application/json')
+        with self.assertRaisesRegexp(InvalidAmountException,
+                                     'Given amount of contracts "0" is invalid, use positive int greater or equal than 1'):
+            self.client.open_order(
+                action=exchanges.SELL,
+                amount='0.021',  # must be greater or equal to 1
+                amount_in_contracts=True,
+                symbol_pair=currencies.BTC_USD,
+                price='4118.0',
+                order_type=exchanges.LIMIT)
