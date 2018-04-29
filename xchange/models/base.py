@@ -18,7 +18,12 @@ class BaseExchangeModel(dict):
         self.assign_dynamic_attributes(parsed_response)
 
     def __getattr__(self, key):
-        return self[key]
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(
+                'Object {} has not attribute "{}"'
+                ''.format(self.__class__.__name__, key))
 
     def normalize_response(self, json_response):
         """As this is the base class, don't perform any transformation"""
@@ -34,7 +39,9 @@ class BaseExchangeModel(dict):
         for field, value in parsed_response.items():
             func = self.schema.get(field)
             if not func:
-                raise ValueError('{} unknown field: "{}"'.format(type(self), field))
+                raise ValueError(
+                    'Unknown field "{}" for class {}'
+                    ''.format(field, self.__class__.__name__))
             self[field] = func(value)
 
 
