@@ -1,3 +1,5 @@
+![Travis status](https://travis-ci.org/martinzugnoni/xchange.svg)
+
 # xchange
 Many cryptocurrency exchange APIs, a single and unified API client 🙌
 

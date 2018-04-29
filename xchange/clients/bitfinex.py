@@ -22,10 +22,6 @@ class BitfinexClient(BaseExchangeClient):
         currencies.LTC_USD: 'ltcusd',
     }
 
-    def __init__(self, api_key, api_secret):
-        self.api_key = api_key
-        self.api_secret = api_secret
-
     def _sign_payload(self, payload):
         payload_dump = json.dumps(payload)
         data = base64.standard_b64encode(payload_dump.encode('utf8'))

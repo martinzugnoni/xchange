@@ -37,10 +37,6 @@ class OkexClient(BaseExchangeClient):
         'ltc_usd': 10,
     }
 
-    def __init__(self, api_key, api_secret):
-        self.api_key = api_key
-        self.api_secret = api_secret
-
     def _sign_params(self, params):
         sign = ''
         for key in sorted(params.keys()):

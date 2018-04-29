@@ -1,12 +1,19 @@
-import json
 import requests
 try:
     from urllib.parse import urlencode
 except ImportError:
      from urllib import urlencode
+try:
+    from json.decoder import JSONDecodeError
+except ImportError:
+    JSONDecodeError = ValueError
 
 
 class BaseExchangeClient:
+
+    def __init__(self, api_key, api_secret):
+        self.api_key = api_key
+        self.api_secret = api_secret
 
     def _get(self, path, headers=None, params=None,
              transformation=None, model_class=None):
