@@ -55,10 +55,10 @@ def _validate_amount_in_contracts(value):
             '`int` values greater than 0'.format(value))
 
 
-def is_valid_argument(arg_name, arg_position=0):
+def is_valid_argument(arg_name, arg_position=1):
     def wrapper(original_func):
         @wraps(original_func)
-        def wrapped(self, *args, **kwargs):
+        def wrapped(*args, **kwargs):
             assert arg_position is None or isinstance(arg_position, int)
             if arg_name in kwargs:
                 arg_value = kwargs[arg_name]
@@ -69,6 +69,6 @@ def is_valid_argument(arg_name, arg_position=0):
                     arg_value = None
             module = importlib.import_module(__name__)
             getattr(module, '_validate_{}'.format(arg_name))(arg_value)
-            return original_func(self, *args, **kwargs)
+            return original_func(*args, **kwargs)
         return wrapped
     return wrapper

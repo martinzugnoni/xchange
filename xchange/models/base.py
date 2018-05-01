@@ -77,56 +77,6 @@ class OrderBook(BaseExchangeModel):
         'bids': sorted_list(key=lambda l: l[0], sorting_type='desc'),
     }
 
-    def get_average_prices(self, balance):
-        """
-        Returns a tuple (price_asks, price_bids), with the average
-        price calculated based on the orders available
-        until covering given balance.
-        Calculates the average prices using the cheapest "asks"
-        orders, and the highest "bids" ones.
-        """
-        balance = Decimal(balance)
-
-        def calculate_weighted_average(operation, order_list, balance):
-            amounts = [t[1] for t in order_list]
-            if sum(amounts) < balance:
-                raise exceptions.InsufficientMarketDepth(
-                    'No depth in {} for amount: {}'.format(operation, balance))
-
-            if operation == 'asks':
-                # when checking the "asks" list, we want to
-                # iterate orders from cheapest to highest
-                order_list = list(reversed(order_list))
-            accum = Decimal(0.0)
-
-            # most of the times last used order in the orderbook
-            # is partially used. we need to know which was the portion
-            # used from that order to calculate the weighted average
-            rest = balance
-
-            for index, price_tuple in enumerate(order_list):
-                amount = price_tuple[1]
-                accum += amount
-                if accum >= balance:
-                    break
-                rest -= amount
-
-            # get the sub list representing only the necessary
-            # orders to fulfill the balance amount
-            sub_list = order_list[:index + 1]
-
-            # change the last used order in the list, to just
-            # the needed rest amount
-            sub_list[-1] = (sub_list[-1][0], Decimal(rest))
-
-            sub_list_amounts = [t[1] for t in sub_list]
-            return sum(x * y for x, y in sub_list) / sum(sub_list_amounts)
-
-        return (
-            calculate_weighted_average('asks', self.asks, balance),
-            calculate_weighted_average('bids', self.bids, balance),
-        )
-
 
 class AccountBalance(BaseExchangeModel):
     schema = {

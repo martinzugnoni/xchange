@@ -23,7 +23,7 @@ class IsValidArgumentDecoratorTestCase(BaseXchangeTestCase):
     def test_custom_arg_position(self):
         """Should look for argument in `arg_position` if it's provided"""
         class Foo:
-            @is_valid_argument('symbol_pair', arg_position=2)
+            @is_valid_argument('symbol_pair', arg_position=3)
             def bar(self, first_arg, second_arg, symbol_pair):
                 pass
 
