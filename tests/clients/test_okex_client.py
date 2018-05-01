@@ -274,8 +274,8 @@ class OkexOpenOrderTestCase(BaseOkexClientTestCase):
             json=fixture,
             status=200,
             content_type='application/json')
-        with self.assertRaisesRegexp(InvalidAmountException,
-                                     'Given amount of contracts "0" is invalid, use positive int greater or equal than 1'):
+        with self.assertRaisesRegexp(ValueError,
+                                     "Given value didn't pass provided test"):
             self.client.open_order(
                 action=exchanges.SELL,
                 amount='0.021',  # must be greater or equal to 1

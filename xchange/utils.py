@@ -2,11 +2,9 @@ from decimal import Decimal
 
 from xchange import exceptions
 from xchange.constants import exchanges
-from xchange.decorators import is_valid_argument
+from xchange.validators import is_restricted_to_values, is_instance, passes_test
 
 
-@is_valid_argument('action', arg_position=0)
-@is_valid_argument('amount', arg_position=2)
 def volume_weighted_average_price(action, order_book, amount):
     """
     Calculates the weighted average price of an operation (sell/buy)
@@ -20,6 +18,12 @@ def volume_weighted_average_price(action, order_book, amount):
     @returns:
         a Decimal object representing the weighted average price.
     """
+    # validate arguments
+    is_restricted_to_values(action, exchanges.ACTIONS)
+
+    is_instance(amount, (Decimal, float, int, str))
+    passes_test(amount, lambda x: Decimal(x))
+
     order_list = order_book.asks if action == exchanges.BUY else order_book.bids
 
     total_market_depth = sum([t[1] for t in order_list])

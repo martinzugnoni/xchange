@@ -5,10 +5,10 @@ from decimal import Decimal
 from cached_property import cached_property_with_ttl
 
 from xchange import exceptions
-from xchange import decorators
 from xchange.constants import currencies, exchanges
 from xchange.clients.base import BaseExchangeClient
 from xchange.models.base import crypto_to_contracts
+from xchange.validators import is_restricted_to_values, is_instance, passes_test
 from xchange.models.okex import (
     OkexTicker, OkexOrderBook, OkexAccountBalance, OkexOrder, OkexPosition)
 
@@ -156,14 +156,16 @@ class OkexClient(BaseExchangeClient):
 
     # public endpoints
 
-    @decorators.is_valid_argument('symbol_pair')
     def get_ticker(self, symbol_pair):
+        is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)
+
         symbol_pair = self.SYMBOLS_MAPPING[symbol_pair]
         return self._get('/v1/future_ticker.do?symbol={}&contract_type=quarter'
                          ''.format(symbol_pair), model_class=OkexTicker)
 
-    @decorators.is_valid_argument('symbol_pair')
     def get_order_book(self, symbol_pair):
+        is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)
+
         symbol_pair = self.SYMBOLS_MAPPING[symbol_pair]
         OkexOrderBook.TICKER = getattr(self, '{}_ticker'.format(symbol_pair))
         OkexOrderBook.SYMBOL = symbol_pair
@@ -182,8 +184,9 @@ class OkexClient(BaseExchangeClient):
                           transformation=self._transform_account_balance,
                           model_class=OkexAccountBalance)
 
-    @decorators.is_valid_argument('symbol_pair')
     def get_open_orders(self, symbol_pair):
+        is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)
+
         path = '/v1/future_order_info.do'
         symbol_pair = self.SYMBOLS_MAPPING[symbol_pair]
         params = {
@@ -202,12 +205,6 @@ class OkexClient(BaseExchangeClient):
         return [order for order in data
                 if order['symbol_pair'] == symbol_pair]
 
-    @decorators.is_valid_argument('action')
-    @decorators.is_valid_argument('amount', arg_position=1)
-    @decorators.is_valid_argument('symbol_pair', arg_position=2)
-    @decorators.is_valid_argument('price', arg_position=3)
-    @decorators.is_valid_argument('order_type', arg_position=4)
-    @decorators.is_valid_argument('amount_in_contracts')
     def open_order(self, action, amount, symbol_pair, price, order_type,
                    amount_in_contracts=False):
         """
@@ -217,7 +214,8 @@ class OkexClient(BaseExchangeClient):
             exchanges.ACTIONS choice
         :amount:
             Decimal, float, integer or string representing number value.
-            If `amount_in_contracts == True`, `amount` needs to be an integer number.
+            If `amount_in_contracts == True`, `amount` needs to be an
+            integer number greater or equal to 1.
         :symbol_pair:
             currencies.SYMBOL_PAIRS choice
         :price:
@@ -227,6 +225,23 @@ class OkexClient(BaseExchangeClient):
         :amount_in_contracts:
             (True|False) Whether the `amount`  argument is expressed in cryptos or contracts
         """
+        # validate arguments
+        is_restricted_to_values(action, exchanges.ACTIONS)
+
+        is_instance(amount, (Decimal, float, int, str))
+        passes_test(amount, lambda x: Decimal(x))
+        if amount_in_contracts:
+            passes_test(amount, lambda x: Decimal(x) >= 1)
+
+        is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)
+
+        is_instance(price, (Decimal, float, int, str))
+        passes_test(price, lambda x: Decimal(x))
+
+        is_restricted_to_values(order_type, exchanges.ORDER_TYPES)
+
+        is_instance(amount_in_contracts, bool)
+
         path = '/v1/future_trade.do'
         symbol_pair = self.SYMBOLS_MAPPING[symbol_pair]
         action = (self.ACTION['open_short']

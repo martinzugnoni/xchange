@@ -46,8 +46,8 @@ class BitfinexClientTickerTestCase(BaseBitfinexClientTestCase):
 
     @responses.activate
     def test_get_ticker_invalid_symbol_pair(self):
-        with self.assertRaisesRegexp(InvalidSymbolPairException,
-                                     'Given symbol pair "usd_usd" is invalid, use'):
+        with self.assertRaisesRegexp(ValueError,
+                                     'Invalid "usd_usd" value, expected any of'):
             self.client.get_ticker('usd_usd')
 
 

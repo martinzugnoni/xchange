@@ -3,11 +3,12 @@ import hmac
 import json
 import base64
 import hashlib
+from decimal import Decimal
 
 from xchange import exceptions
-from xchange import decorators
 from xchange.constants import currencies, exchanges
 from xchange.clients.base import BaseExchangeClient
+from xchange.validators import is_restricted_to_values, is_instance, passes_test
 from xchange.models.bitfinex import (
     BitfinexOrderBook, BitfinexAccountBalance, BitfinexOrder, BitfinexTicker,
     BitfinexPosition)
@@ -51,14 +52,16 @@ class BitfinexClient(BaseExchangeClient):
 
     # public endpoints
 
-    @decorators.is_valid_argument('symbol_pair')
     def get_ticker(self, symbol_pair):
+        is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)
+
         symbol_pair = self.SYMBOLS_MAPPING[symbol_pair]
         return self._get('/v1/pubticker/{}'.format(symbol_pair),
                          model_class=BitfinexTicker)
 
-    @decorators.is_valid_argument('symbol_pair')
     def get_order_book(self, symbol_pair):
+        is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)
+
         symbol_pair = self.SYMBOLS_MAPPING[symbol_pair]
         return self._get('/v1/book/{}'.format(symbol_pair),
                          model_class=BitfinexOrderBook)
@@ -76,8 +79,9 @@ class BitfinexClient(BaseExchangeClient):
                           transformation=self._transform_account_balance,
                           model_class=BitfinexAccountBalance)
 
-    @decorators.is_valid_argument('symbol_pair')
     def get_open_orders(self, symbol_pair):
+        is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)
+
         path = '/v1/orders'
         payload = {
             'request': path,
@@ -89,12 +93,34 @@ class BitfinexClient(BaseExchangeClient):
         return [order for order in data
                 if order['symbol_pair'] == symbol_pair]
 
-    @decorators.is_valid_argument('action')
-    @decorators.is_valid_argument('amount', arg_position=1)
-    @decorators.is_valid_argument('symbol_pair', arg_position=2)
-    @decorators.is_valid_argument('price', arg_position=3)
-    @decorators.is_valid_argument('order_type', arg_position=4)
     def open_order(self, action, amount, symbol_pair, price, order_type):
+        """
+        Creates a new Order.
+
+        :action:
+            exchanges.ACTIONS choice
+        :amount:
+            Decimal, float, integer or string representing number value.
+        :symbol_pair:
+            currencies.SYMBOL_PAIRS choice
+        :price:
+            Decimal, float, integer or string representing number value.
+        :order_type:
+            exchanges.ORDER_TYPES choice
+        """
+        # validate arguments
+        is_restricted_to_values(action, exchanges.ACTIONS)
+
+        is_instance(amount, (Decimal, float, int, str))
+        passes_test(amount, lambda x: Decimal(x))
+
+        is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)
+
+        is_instance(price, (Decimal, float, int, str))
+        passes_test(price, lambda x: isinstance(Decimal(x), Decimal))
+
+        is_restricted_to_values(order_type, exchanges.ORDER_TYPES)
+
         path = '/v1/order/new'
         symbol_pair = self.SYMBOLS_MAPPING[symbol_pair]
         payload = {
@@ -121,8 +147,9 @@ class BitfinexClient(BaseExchangeClient):
         signed_payload = self._sign_payload(payload)
         return self._post(path, headers=signed_payload)
 
-    @decorators.is_valid_argument('symbol_pair')
     def cancel_all_orders(self, symbol_pair):
+        is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)
+
         path = '/v1/order/cancel/multi'
         orders = self.get_open_orders(symbol_pair=symbol_pair)
         if not orders:
@@ -135,8 +162,9 @@ class BitfinexClient(BaseExchangeClient):
         signed_payload = self._sign_payload(payload)
         return self._post(path, headers=signed_payload)
 
-    @decorators.is_valid_argument('symbol_pair')
     def get_open_positions(self, symbol_pair):
+        is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)
+
         path = '/v1/positions'
         payload = {
             'request': path,
@@ -148,12 +176,20 @@ class BitfinexClient(BaseExchangeClient):
         return [pos for pos in positions
                 if pos['symbol_pair'] == symbol_pair]
 
-    @decorators.is_valid_argument('action')
-    @decorators.is_valid_argument('amount', arg_position=1)
-    @decorators.is_valid_argument('symbol_pair', arg_position=2)
-    @decorators.is_valid_argument('price', arg_position=3)
-    @decorators.is_valid_argument('order_type', arg_position=4)
     def close_position(self, action, amount, symbol_pair, price, order_type):
+        # validate arguments
+        is_restricted_to_values(action, exchanges.ACTIONS)
+
+        is_instance(amount, (Decimal, float, int, str))
+        passes_test(amount, lambda x: Decimal(x))
+
+        is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)
+
+        is_instance(price, (Decimal, float, int, str))
+        passes_test(price, lambda x: isinstance(Decimal(x), Decimal))
+
+        is_restricted_to_values(order_type, exchanges.ORDER_TYPES)
+
         path = '/v1/order/new'
         symbol_pair = self.SYMBOLS_MAPPING[symbol_pair]
 
@@ -174,8 +210,9 @@ class BitfinexClient(BaseExchangeClient):
         return self._post(path, headers=signed_payload,
                           model_class=BitfinexOrder)
 
-    @decorators.is_valid_argument('symbol_pair')
     def close_all_positions(self, symbol_pair):
+        is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)
+
         positions = self.get_open_positions(symbol_pair=symbol_pair)
         if not positions:
             return
