@@ -44,6 +44,24 @@ class BaseClientTestCase(BaseXchangeTestCase):
         for method in methods:
             self.assertTrue(getattr(self.client, method) is not None)
 
+    def test_client_interface_not_implement(self):
+        methods = [
+            ('get_ticker', ('symbol_pair', )),
+            ('get_order_book', ('symbol_pair', )),
+            ('get_account_balance', ()),
+            ('get_open_orders', ()),
+            ('get_open_positions', ()),
+            ('get_order_status', ('order_id', )),
+            ('open_order', ('action', 'amount', 'symbol_pair', 'price', 'order_type')),
+            ('cancel_order', ('order_id', )),
+            ('cancel_all_orders', ()),
+            ('close_position', ('action', 'amount', 'symbol_pair', 'price', 'order_type')),
+            ('close_all_positions', ()),
+        ]
+        for method, args in methods:
+            with self.assertRaises(NotImplementedError):
+                getattr(self.client, method)(**{arg_name: None for arg_name in args})
+
     @responses.activate
     def test_get_request_raw_data(self):
         """Should return response data as plain JSON when no model_class is provided"""
