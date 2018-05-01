@@ -1,4 +1,5 @@
-![Travis status](https://travis-ci.org/martinzugnoni/xchange.svg)
+![Travis status](https://travis-ci.org/martinzugnoni/xchange.svg?branch=master)
+![Coverage](https://codecov.io/gh/martinzugnoni/xchange/branch/master/graphs/badge.svg?branch=master)
 
 # xchange
 Many cryptocurrency exchange APIs, a single and unified API client 🙌
