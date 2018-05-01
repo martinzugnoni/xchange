@@ -254,7 +254,7 @@ class OkexOpenOrderTestCase(BaseOkexClientTestCase):
             content_type='application/json')
         order = self.client.open_order(
             action=exchanges.SELL,
-            amount='2.0',
+            amount='2',
             amount_in_contracts=True,
             symbol_pair=currencies.BTC_USD,
             price='4118.0',
@@ -283,3 +283,252 @@ class OkexOpenOrderTestCase(BaseOkexClientTestCase):
                 symbol_pair=currencies.BTC_USD,
                 price='4118.0',
                 order_type=exchanges.LIMIT)
+
+
+class OkexCancelOrderTestCase(BaseOkexClientTestCase):
+
+    @responses.activate
+    def test_cancel_order(self):
+        fixture = {
+            'orders': [
+                {
+                    'order_id': 8934112485,
+                    'amount': 1,
+                    'contract_name': 'BTC0929',
+                    'create_date': 1503614569000,
+                    'deal_amount': 0,
+                    'fee': 0,
+                    'lever_rate': 10,
+                    'price': 5000,
+                    'price_avg': 0,
+                    'status': 0,
+                    'symbol': 'btc_usd',
+                    'type': 2,
+                    'unit_amount': 100
+                }
+            ],
+            'result': True
+        }
+        responses.add(
+            method='POST',
+            url=re.compile('https://www\.okex\.com/api/v1/future_order_info\.do'),
+            json=fixture,
+            status=200,
+            content_type='application/json')
+        fixture = {'order_id': '8934112485', 'result': True}
+        responses.add(
+            method='POST',
+            url=re.compile('https://www\.okex\.com/api/v1/future_cancel\.do'),
+            json=fixture,
+            status=200,
+            content_type='application/json')
+        response = self.client.cancel_order(8934112485)
+        self.assertEqual(response, fixture)
+
+    @responses.activate
+    def test_cancel_order_id_not_found(self):
+        fixture = {
+            'orders': [],
+            'result': True
+        }
+        responses.add(
+            method='POST',
+            url=re.compile('https://www\.okex\.com/api/v1/future_order_info\.do'),
+            json=fixture,
+            status=200,
+            content_type='application/json')
+        with self.assertRaisesRegexp(ValueError, 'Could not find order with ID "8934112485"'):
+            self.client.cancel_order(8934112485)
+
+    @responses.activate
+    def test_cancel_all_orders(self):
+        fixture = {
+            'orders': [
+                {
+                    'order_id': 8934112485,
+                    'amount': 1,
+                    'contract_name': 'BTC0929',
+                    'create_date': 1503614569000,
+                    'deal_amount': 0,
+                    'fee': 0,
+                    'lever_rate': 10,
+                    'price': 5000,
+                    'price_avg': 0,
+                    'status': 0,
+                    'symbol': 'btc_usd',
+                    'type': 2,
+                    'unit_amount': 100
+                },
+                {
+                    'order_id': 8913469485,
+                    'amount': 1,
+                    'contract_name': 'BTC0929',
+                    'create_date': 1503254699000,
+                    'deal_amount': 0,
+                    'fee': 0,
+                    'lever_rate': 10,
+                    'price': 5000,
+                    'price_avg': 0,
+                    'status': 0,
+                    'symbol': 'btc_usd',
+                    'type': 2,
+                    'unit_amount': 100
+                },
+            ],
+            'result': True
+        }
+        responses.add(
+            method='POST',
+            url=re.compile('https://www\.okex\.com/api/v1/future_order_info\.do'),
+            json=fixture,
+            status=200,
+            content_type='application/json')
+        fixture = {'order_id': '8934112485,8913469485', 'result': True}
+        responses.add(
+            method='POST',
+            url=re.compile('https://www\.okex\.com/api/v1/future_cancel\.do'),
+            json=fixture,
+            status=200,
+            content_type='application/json')
+        response = self.client.cancel_all_orders(currencies.BTC_USD)
+        self.assertEqual(response, fixture)
+
+
+class OkexGetOpenPositionsTestCase(BaseOkexClientTestCase):
+
+    @responses.activate
+    def test_get_open_positions(self):
+        fixture = {
+            'force_liqu_price': '10,604.11',
+            'holding': [{
+                'buy_amount': 0,
+                'buy_available': 0,
+                'buy_price_avg': 3348,
+                'buy_price_cost': 3348,
+                'buy_profit_real': 0.00052895,
+                'contract_id': 20171222465,
+                'contract_type': 'quarter',
+                'create_date': 1505469260000,
+                'lever_rate': 20,
+                'sell_amount': 1,
+                'sell_available': 1,
+                'sell_price_avg': 3896.13,
+                'sell_price_cost': 3896.13,
+                'sell_profit_real': -0.1,
+                'symbol': 'btc_usd'
+            }],
+            'result': True
+        }
+        responses.add(
+            method='POST',
+            url=re.compile('https://www\.okex\.com/api/v1/future_position\.do'),
+            json=fixture,
+            status=200,
+            content_type='application/json')
+        positions = self.client.get_open_positions(currencies.BTC_USD)
+        expected = [
+            {
+                'action': 'sell',
+                'amount': Decimal('1'),
+                'id': 'None',
+                'price': Decimal('3896.1300000000001091393642127513885498046875'),
+                'profit_loss': Decimal('-0.1000000000000000055511151231257827021181583404541015625'),
+                'symbol_pair': 'btc_usd'
+            }
+        ]
+        self.assertEqual(positions, expected)
+
+    @responses.activate
+    def test_get_open_positions_no_positions(self):
+        fixture = {
+            'force_liqu_price': '0.00',
+            'holding': [{
+                'buy_amount': 0,
+                'buy_available': 0,
+                'buy_price_avg': 3348,
+                'buy_price_cost': 3348,
+                'buy_profit_real': 0.00052895,
+                'contract_id': 20171453212,
+                'contract_type': 'quarter',
+                'create_date': 1505612590000,
+                'lever_rate': 20,
+                'sell_amount': 0,
+                'sell_available': 0,
+                'sell_price_avg': 3896.13,
+                'sell_price_cost': 3896.13,
+                'sell_profit_real': 0.00010698,
+                'symbol': 'btc_usd'
+            }],
+            'result': True
+        }
+        responses.add(
+            method='POST',
+            url=re.compile('https://www\.okex\.com/api/v1/future_position\.do'),
+            json=fixture,
+            status=200,
+            content_type='application/json')
+        positions = self.client.get_open_positions(currencies.BTC_USD)
+        expected = []
+        self.assertEqual(positions, expected)
+
+
+class OkexClosePositionTestCase(BaseOkexClientTestCase):
+
+    @responses.activate
+    def test_close_position(self):
+        fixture = {'order_id': 8931546905, 'result': True}
+        responses.add(
+            method='POST',
+            url=re.compile('https://www\.okex\.com/api/v1/future_trade\.do'),
+            json=fixture,
+            status=200,
+            content_type='application/json')
+        order = self.client.close_position(
+            action=exchanges.SELL,
+            amount='0.01209215',
+            symbol_pair=currencies.BTC_USD,
+            price='4118.0',
+            order_type=exchanges.MARKET)
+        expected = {
+            'id': '8931546905'
+        }
+        self.assertEqual(order, expected)
+        self.assertEqual(type(order), OkexOrder)
+
+    @responses.activate
+    def test_close_all_positions(self):
+        fixture = {
+            'force_liqu_price': '10,604.11',
+            'holding': [{
+                'buy_amount': 0,
+                'buy_available': 0,
+                'buy_price_avg': 3348,
+                'buy_price_cost': 3348,
+                'buy_profit_real': 0.00052895,
+                'contract_id': 20171222465,
+                'contract_type': 'quarter',
+                'create_date': 1505469260000,
+                'lever_rate': 20,
+                'sell_amount': 1,
+                'sell_available': 1,
+                'sell_price_avg': 3896.13,
+                'sell_price_cost': 3896.13,
+                'sell_profit_real': -0.1,
+                'symbol': 'btc_usd'
+            }],
+            'result': True
+        }
+        responses.add(
+            method='POST',
+            url=re.compile('https://www\.okex\.com/api/v1/future_position\.do'),
+            json=fixture,
+            status=200,
+            content_type='application/json')
+        fixture = {'order_id': 8945328905, 'result': True}
+        responses.add(
+            method='POST',
+            url=re.compile('https://www\.okex\.com/api/v1/future_trade\.do'),
+            json=fixture,
+            status=200,
+            content_type='application/json')
+        self.client.close_all_positions(currencies.BTC_USD)

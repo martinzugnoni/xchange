@@ -248,14 +248,7 @@ class OkexClient(BaseExchangeClient):
                   if action == exchanges.SELL
                   else self.ACTION['open_long'])
 
-        if amount_in_contracts:
-            # validate amount expressed in contracts is valid
-            amount = int(float(amount))
-            if amount < 1:
-                raise exceptions.InvalidAmountException(
-                    'Given amount of contracts "{}" is invalid, '
-                    'use positive int greater or equal than 1'.format(amount))
-        else:
+        if not amount_in_contracts:
             amount = crypto_to_contracts(
                 amount,
                 getattr(self, '{}_ticker'.format(symbol_pair)).last,
@@ -276,10 +269,25 @@ class OkexClient(BaseExchangeClient):
         return self._post(path, params=params, model_class=OkexOrder)
 
     def cancel_order(self, order_id):
-        # FIXME: don't hardcode btc_usd here
+        is_instance(order_id, (int, ))
+
+        # NOTE: OKEX doesn't provide a way of getting all orders from any
+        #       symbol pair. We need to loop through all of them until we find it.
+        order = None
+        for symbol_pair in currencies.SYMBOL_PAIRS:
+            orders = self.get_open_orders(symbol_pair=symbol_pair)
+            orders = [order for order in orders if int(order.id) == order_id]
+            if orders:
+                # found order in current symbol pair, no need to keep iterating
+                order = orders[0]
+                break
+
+        if not order:
+            raise ValueError('Could not find order with ID "{}"'.format(order_id))
+
         path = '/v1/future_cancel.do'
         params = {
-            'symbol': 'btc_usd',
+            'symbol': order.symbol_pair,
             'contract_type': 'quarter',
             'order_id': int(order_id),
         }
@@ -288,10 +296,13 @@ class OkexClient(BaseExchangeClient):
         return self._post(path, params=params)
 
     def cancel_all_orders(self, symbol_pair):
-        symbol_pair = self.SYMBOLS[symbol_pair]
+        is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)
+
         orders = self.get_open_orders(symbol_pair=symbol_pair)
         if not orders:
             return
+
+        symbol_pair = self.SYMBOLS_MAPPING[symbol_pair]
         order_ids = ','.join([order.id for order in orders])
         path = '/v1/future_cancel.do'
         params = {
@@ -304,7 +315,9 @@ class OkexClient(BaseExchangeClient):
         return self._post(path, params=params)
 
     def get_open_positions(self, symbol_pair):
-        symbol_pair = self.SYMBOLS[symbol_pair]
+        is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)
+
+        symbol_pair = self.SYMBOLS_MAPPING[symbol_pair]
         path = '/v1/future_position.do'
         params = {
             'symbol': symbol_pair,
@@ -317,18 +330,35 @@ class OkexClient(BaseExchangeClient):
                           model_class=OkexPosition)
 
     def close_position(self, action, amount, symbol_pair, price, order_type,
-                       amount_in_contracts=None):
+                       amount_in_contracts=False):
+        # validate arguments
+        is_restricted_to_values(action, exchanges.ACTIONS)
+
+        is_instance(amount, (Decimal, float, int, str))
+        passes_test(amount, lambda x: Decimal(x))
+        if amount_in_contracts:
+            passes_test(amount, lambda x: Decimal(x) >= 1)
+
+        is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)
+
+        is_instance(price, (Decimal, float, int, str))
+        passes_test(price, lambda x: Decimal(x))
+
+        is_restricted_to_values(order_type, exchanges.ORDER_TYPES)
+
+        is_instance(amount_in_contracts, bool)
+
         path = '/v1/future_trade.do'
-        symbol_pair = self.SYMBOLS[symbol_pair]
+        symbol_pair = self.SYMBOLS_MAPPING[symbol_pair]
         action = (self.ACTION['close_short']
                   if action == 'sell'
                   else self.ACTION['close_long'])
 
-        amount_in_contracts = (
-            amount_in_contracts or
-            crypto_to_contracts(amount,
-                                getattr(self, '{}_ticker'.format(symbol_pair)).last,
-                                self.CONTRACT_UNIT_AMOUNTS[symbol_pair]))
+        if not amount_in_contracts:
+            amount = crypto_to_contracts(
+                amount,
+                getattr(self, '{}_ticker'.format(symbol_pair)).last,
+                self.CONTRACT_UNIT_AMOUNTS[symbol_pair])
 
         match_price = 1 if order_type == 'market' else 0
         params = {
@@ -342,18 +372,20 @@ class OkexClient(BaseExchangeClient):
         }
         params['api_key'] = self.api_key
         params['sign'] = self._sign_params(params)
-        return self._post(path, params=params)
+        return self._post(path, params=params, model_class=OkexOrder)
 
     def close_all_positions(self, symbol_pair):
+        is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)
+
         positions = self.get_open_positions(symbol_pair=symbol_pair)
         if not positions:
             return
         for position in positions:
             self.close_position(
                 action=position.action,
-                amount=None,
-                amount_in_contracts=str(position.amount),
+                amount=str(position.amount),
+                amount_in_contracts=True,
                 symbol_pair=position.symbol_pair,
                 price=str(position.price),
-                order_type='market'
+                order_type=exchanges.MARKET
             )
