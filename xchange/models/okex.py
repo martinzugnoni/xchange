@@ -64,18 +64,18 @@ class OkexOrderBook(OrderBook):
             last_price = self.TICKER.last
             unit_amount = self.CONTRACT_UNIT_AMOUNTS[self.SYMBOL]
             return {
-                'asks': [(Decimal(doc[0]),
-                          contracts_to_crypto(Decimal(doc[1]), last_price, unit_amount))
+                'asks': [(Decimal(str(doc[0])),
+                          contracts_to_crypto(Decimal(str(doc[1])), last_price, unit_amount))
                          for doc in json_response['asks']],
-                'bids': [(Decimal(doc[0]),
-                          contracts_to_crypto(Decimal(doc[1]), last_price, unit_amount))
+                'bids': [(Decimal(str(doc[0])),
+                          contracts_to_crypto(Decimal(str(doc[1])), last_price, unit_amount))
                          for doc in json_response['bids']],
             }
         else:
             return {
-                'asks': [(Decimal(doc[0]), Decimal(doc[1]))
+                'asks': [(Decimal(str(doc[0])), Decimal(str(doc[1])))
                          for doc in json_response['asks']],
-                'bids': [(Decimal(doc[0]), Decimal(doc[1]))
+                'bids': [(Decimal(str(doc[0])), Decimal(str(doc[1])))
                          for doc in json_response['bids']],
             }
 

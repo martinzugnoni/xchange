@@ -1,9 +1,7 @@
-from decimal import Decimal
-
 from xchange import exceptions
 from xchange.constants import currencies
 from xchange.models.utils import (
-    sorted_list, restricted_to_values,
+    as_decimal, sorted_list, restricted_to_values,
     normalized_symbol, normalized_symbol_pair,
     contracts_to_crypto, crypto_to_contracts
 )
@@ -47,12 +45,12 @@ class BaseExchangeModel(dict):
 
 class Ticker(BaseExchangeModel):
     schema = {
-        'ask': Decimal,
-        'bid': Decimal,
-        'low': Decimal,
-        'high': Decimal,
-        'last': Decimal,
-        'volume': Decimal,
+        'ask': as_decimal,
+        'bid': as_decimal,
+        'low': as_decimal,
+        'high': as_decimal,
+        'last': as_decimal,
+        'volume': as_decimal,
     }
 
 
@@ -81,7 +79,7 @@ class OrderBook(BaseExchangeModel):
 class AccountBalance(BaseExchangeModel):
     schema = {
         'symbol': normalized_symbol,
-        'amount': Decimal,
+        'amount': as_decimal,
     }
 
 
@@ -89,8 +87,8 @@ class Order(BaseExchangeModel):
     schema = {
         'id': str,
         'action': restricted_to_values(('sell', 'buy')),
-        'amount': Decimal,
-        'price': Decimal,
+        'amount': as_decimal,
+        'price': as_decimal,
         'symbol_pair': normalized_symbol_pair,
         'type': restricted_to_values(('limit', 'market')),
         'status': restricted_to_values(('open', 'closed')),
@@ -101,8 +99,8 @@ class Position(BaseExchangeModel):
     schema = {
         'id': str,
         'action': restricted_to_values(('sell', 'buy')),
-        'amount': Decimal,
-        'price': Decimal,
+        'amount': as_decimal,
+        'price': as_decimal,
         'symbol_pair': normalized_symbol_pair,
-        'profit_loss': Decimal,
+        'profit_loss': as_decimal,
     }

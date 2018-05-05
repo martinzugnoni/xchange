@@ -157,7 +157,7 @@ class BitfinexClient(BaseExchangeClient):
         payload = {
             'request': path,
             'nonce': str(time.time()),
-            'orders': [order.id for order in orders]
+            'order_ids': [order.id for order in orders]
         }
         signed_payload = self._sign_payload(payload)
         return self._post(path, headers=signed_payload)

@@ -3,6 +3,10 @@ from decimal import Decimal
 from xchange.constants import currencies
 
 
+def as_decimal(value):
+    return Decimal(str(value))
+
+
 def object_of_class(class_name):
     def func(obj):
         if obj.__class__.__name__ != class_name:

@@ -48,5 +48,6 @@ SYMBOL_PAIRS = [
 ]
 SYMBOL_PAIR_VARIANTS = {
     BTC_USD: ('btcusd', 'xbtusd', 'xxbtzusd', 'btc0929', 'btc1229', ),
-    ETH_USD: ('ethusd', )
+    ETH_USD: ('ethusd', 'eth0511', 'eth0518', 'eth0629'),
+    LTC_USD: ('ltcusd', 'ltc0511', 'ltc0518', 'ltc0629'),
 }
