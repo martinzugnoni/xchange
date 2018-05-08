@@ -127,9 +127,9 @@ class BitfinexClient(BaseExchangeClient):
             'request': path,
             'nonce': str(time.time()),
             'side': action,
-            'amount': amount,
+            'amount': str(amount),
             'symbol': symbol_pair,
-            'price': price,
+            'price': str(price),
             'type': order_type,
         }
         signed_payload = self._sign_payload(payload)
@@ -176,51 +176,25 @@ class BitfinexClient(BaseExchangeClient):
         return [pos for pos in positions
                 if pos['symbol_pair'] == symbol_pair]
 
-    def close_position(self, action, amount, symbol_pair, price, order_type):
-        # validate arguments
-        is_restricted_to_values(action, exchanges.ACTIONS)
-
-        is_instance(amount, (Decimal, float, int, str))
-        passes_test(amount, lambda x: Decimal(x))
-
+    def close_position(self, position_id, symbol_pair):
         is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)
 
-        is_instance(price, (Decimal, float, int, str))
-        passes_test(price, lambda x: isinstance(Decimal(x), Decimal))
+        positions = self.get_open_positions(symbol_pair)
+        try:
+            pos = [pos for pos in positions if pos.id == position_id][0]
+        except IndexError:
+            raise self.ERROR_CLASS('Could not find position with ID: "{}"'.format(position_id))
 
-        is_restricted_to_values(order_type, exchanges.ORDER_TYPES)
-
-        path = '/v1/order/new'
-        symbol_pair = self.SYMBOLS_MAPPING[symbol_pair]
-
-        # as we want to close the possition,
+        # as we want to close the position,
         # we need to performe the opposite action to the given one.
-        action = exchanges.SELL if action == exchanges.BUY else exchanges.BUY
+        action = exchanges.SELL if pos.action == exchanges.BUY else exchanges.BUY
 
-        payload = {
-            'request': path,
-            'nonce': str(time.time()),
-            'side': action,
-            'amount': amount,
-            'symbol': symbol_pair,
-            'price': price,
-            'type': order_type,
-        }
-        signed_payload = self._sign_payload(payload)
-        return self._post(path, headers=signed_payload,
-                          model_class=BitfinexOrder)
+        return self.open_order(
+            action, pos.amount, pos.symbol_pair, pos.price, exchanges.MARKET)
 
     def close_all_positions(self, symbol_pair):
         is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)
 
         positions = self.get_open_positions(symbol_pair=symbol_pair)
-        if not positions:
-            return
-        for position in positions:
-            self.close_position(
-                action=position.action,
-                amount=str(position.amount),
-                symbol_pair=position.symbol_pair,
-                price=str(position.price),
-                order_type='market'
-            )
+        for pos in positions:
+            self.close_position(pos.id, pos.symbol_pair)

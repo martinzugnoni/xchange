@@ -40,5 +40,9 @@ class BitfinexException(BaseXchangeException):
     pass
 
 
-class OkexException(Exception):
+class OkexException(BaseXchangeException):
+    pass
+
+
+class KrakenException(BaseXchangeException):
     pass
