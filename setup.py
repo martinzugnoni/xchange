@@ -34,7 +34,12 @@ setup(
     author='Martin Zugnoni',
     author_email='martin.zugnoni@gmail.com',
     license='MIT',
-    packages=['xchange'],
+    packages=[
+        'xchange',
+        'xchange.clients',
+        'xchange.constants',
+        'xchange.models'
+    ],
     maintainer='Martin Zugnoni',
     tests_require=[
         'requests==2.18.4',
