@@ -41,6 +41,10 @@ setup(
         'xchange.models'
     ],
     maintainer='Martin Zugnoni',
+    install_requires=[
+        'requests==2.18.4',
+        'cached-property==1.4.2',
+    ],
     tests_require=[
         'requests==2.18.4',
         'cached-property==1.4.2',
