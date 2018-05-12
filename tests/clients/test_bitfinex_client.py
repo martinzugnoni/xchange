@@ -89,6 +89,13 @@ class BitfinexClientAccountBalanceTestCase(BaseBitfinexClientTestCase):
         for obj in balance:
             self.assertEqual(type(obj), BitfinexAccountBalance)
 
+    @responses.activate
+    def test_get_account_balance_symbol_pair(self):
+        balance = self.client.get_account_balance(currencies.BTC)
+        expected = {'amount': Decimal('0.01209215'), 'symbol': 'btc'}
+        self.assertEqual(balance, expected)
+        self.assertEqual(type(balance), BitfinexAccountBalance)
+
 
 class BitfinexGetOpenOrdersTestCase(BaseBitfinexClientTestCase):
 

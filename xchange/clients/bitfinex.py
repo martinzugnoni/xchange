@@ -68,16 +68,24 @@ class BitfinexClient(BaseExchangeClient):
 
     # authenticated endpoints
 
-    def get_account_balance(self):
+    def get_account_balance(self, symbol=None):
+        is_restricted_to_values(symbol, currencies.SYMBOLS + [None])
+
         path = '/v1/balances'
         payload = {
             'request': path,
             'nonce': str(time.time())
         }
         signed_payload = self._sign_payload(payload)
-        return self._post(path, headers=signed_payload,
+        data = self._post(path, headers=signed_payload,
                           transformation=self._transform_account_balance,
                           model_class=BitfinexAccountBalance)
+        if symbol is None:
+            return data
+        for symbol_balance in data:
+            if symbol_balance.symbol == symbol:
+                return symbol_balance
+        raise self.ERROR_CLASS('Symbol "{}" was not found in the account balance'.format(symbol))
 
     def get_open_orders(self, symbol_pair):
         is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)

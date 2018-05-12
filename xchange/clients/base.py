@@ -108,7 +108,7 @@ class BaseExchangeClient:
 
     # authenticated endpoints
 
-    def get_account_balance(self):
+    def get_account_balance(self, symbol=None):
         raise NotImplementedError
 
     def get_open_orders(self, symbol_pair):

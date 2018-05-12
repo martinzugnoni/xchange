@@ -175,14 +175,22 @@ class OkexClient(BaseExchangeClient):
 
     # authenticated endpoints
 
-    def get_account_balance(self):
+    def get_account_balance(self, symbol=None):
+        is_restricted_to_values(symbol, currencies.SYMBOLS + [None])
+
         path = '/v1/future_userinfo.do'
         params = {}
         params['api_key'] = self.api_key
         params['sign'] = self._sign_params(params)
-        return self._post(path, params=params,
+        data = self._post(path, params=params,
                           transformation=self._transform_account_balance,
                           model_class=OkexAccountBalance)
+        if symbol is None:
+            return data
+        for symbol_balance in data:
+            if symbol_balance.symbol == symbol:
+                return symbol_balance
+        raise self.ERROR_CLASS('Symbol "{}" was not found in the account balance'.format(symbol))
 
     def get_open_orders(self, symbol_pair):
         is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)

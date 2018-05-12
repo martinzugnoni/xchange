@@ -182,7 +182,9 @@ class KrakenClient(BaseExchangeClient):
 
     # authenticated endpoints
 
-    def get_account_balance(self):
+    def get_account_balance(self, symbol=None):
+        is_restricted_to_values(symbol, currencies.SYMBOLS + [None])
+
         path = '/0/private/Balance'
         payload = {
             'nonce': int(1000 * time.time()),
@@ -191,9 +193,15 @@ class KrakenClient(BaseExchangeClient):
             'API-Key': self.api_key,
             'API-Sign': self._sign_payload(path, payload)
         }
-        return self._post(path, headers=headers, body=payload,
+        data = self._post(path, headers=headers, body=payload,
                           transformation=self._transform_account_balance,
                           model_class=KrakenAccountBalance)
+        if symbol is None:
+            return data
+        for symbol_balance in data:
+            if symbol_balance.symbol == symbol:
+                return symbol_balance
+        raise self.ERROR_CLASS('Symbol "{}" was not found in the account balance'.format(symbol))
 
     def get_open_orders(self, symbol_pair):
         is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)
