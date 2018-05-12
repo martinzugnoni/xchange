@@ -510,12 +510,27 @@ class BitfinexClosePositionTestCase(BaseBitfinexClientTestCase):
             json=fixture,
             status=200,
             content_type='application/json')
+        fixture = [
+            {
+                'id': 34589787,
+                'amount': '-0.01209215',
+                'base': '4118.0',
+                'pl': '-0.10928401484',
+                'status': 'ACTIVE',
+                'swap': '0.0',
+                'symbol': 'btcusd',
+                'timestamp': '1503264460.0'
+            }
+        ]
+        responses.add(
+            method='POST',
+            url=re.compile('https://api.bitfinex.com/v1/positions'),
+            json=fixture,
+            status=200,
+            content_type='application/json')
         order = self.client.close_position(
-            action=exchanges.SELL,
-            amount='0.01209215',
-            symbol_pair=currencies.BTC_USD,
-            price='4118.0',
-            order_type=exchanges.LIMIT)
+            position_id='34589787',
+            symbol_pair=currencies.BTC_USD)
         expected = {
             'action': 'buy',
             'amount': Decimal('0.005'),

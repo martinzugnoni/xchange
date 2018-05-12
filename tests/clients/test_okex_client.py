@@ -312,7 +312,7 @@ class OkexCancelOrderTestCase(BaseOkexClientTestCase):
             json=fixture,
             status=200,
             content_type='application/json')
-        response = self.client.cancel_order(8934112485)
+        response = self.client.cancel_order('8934112485')
         self.assertEqual(response, fixture)
 
     @responses.activate
@@ -328,7 +328,7 @@ class OkexCancelOrderTestCase(BaseOkexClientTestCase):
             status=200,
             content_type='application/json')
         with self.assertRaisesRegexp(ValueError, 'Could not find order with ID "8934112485"'):
-            self.client.cancel_order(8934112485)
+            self.client.cancel_order('8934112485')
 
     @responses.activate
     def test_cancel_all_orders(self):
@@ -466,24 +466,8 @@ class OkexClosePositionTestCase(BaseOkexClientTestCase):
 
     @responses.activate
     def test_close_position(self):
-        fixture = {'order_id': 8931546905, 'result': True}
-        responses.add(
-            method='POST',
-            url=re.compile('https://www\.okex\.com/api/v1/future_trade\.do'),
-            json=fixture,
-            status=200,
-            content_type='application/json')
-        order = self.client.close_position(
-            action=exchanges.SELL,
-            amount='0.01209215',
-            symbol_pair=currencies.BTC_USD,
-            price='4118.0',
-            order_type=exchanges.MARKET)
-        expected = {
-            'id': '8931546905'
-        }
-        self.assertEqual(order, expected)
-        self.assertEqual(type(order), OkexOrder)
+        with self.assertRaises(NotImplementedError):
+            self.client.close_position('some-id', currencies.ETH_USD)
 
     @responses.activate
     def test_close_all_positions(self):

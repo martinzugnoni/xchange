@@ -206,7 +206,7 @@ class OkexClient(BaseExchangeClient):
                 if order['symbol_pair'] == symbol_pair]
 
     def open_order(self, action, amount, symbol_pair, price, order_type,
-                   amount_in_contracts=False):
+                   amount_in_contracts=False, closing=False):
         """
         Creates a new Order.
 
@@ -224,6 +224,8 @@ class OkexClient(BaseExchangeClient):
             exchanges.ORDER_TYPES choice
         :amount_in_contracts:
             (True|False) Whether the `amount`  argument is expressed in cryptos or contracts
+        :closing:
+            (True|False) Whether the order we are opening is to close an existing position or not
         """
         # validate arguments
         is_restricted_to_values(action, exchanges.ACTIONS)
@@ -241,12 +243,18 @@ class OkexClient(BaseExchangeClient):
         is_restricted_to_values(order_type, exchanges.ORDER_TYPES)
 
         is_instance(amount_in_contracts, bool)
+        is_instance(closing, bool)
 
         path = '/v1/future_trade.do'
         symbol_pair = self.SYMBOLS_MAPPING[symbol_pair]
-        action = (self.ACTION['open_short']
-                  if action == exchanges.SELL
-                  else self.ACTION['open_long'])
+        if closing:
+            action = (self.ACTION['close_long']
+                      if action == exchanges.SELL
+                      else self.ACTION['close_short'])
+        else:
+            action = (self.ACTION['open_short']
+                      if action == exchanges.SELL
+                      else self.ACTION['open_long'])
 
         if not amount_in_contracts:
             amount = crypto_to_contracts(
@@ -269,14 +277,15 @@ class OkexClient(BaseExchangeClient):
         return self._post(path, params=params, model_class=OkexOrder)
 
     def cancel_order(self, order_id):
-        is_instance(order_id, (int, ))
+        is_instance(order_id, (str, ))
+        passes_test(order_id, lambda x: int(x))
 
         # NOTE: OKEX doesn't provide a way of getting all orders from any
         #       symbol pair. We need to loop through all of them until we find it.
         order = None
         for symbol_pair in currencies.SYMBOL_PAIRS:
             orders = self.get_open_orders(symbol_pair=symbol_pair)
-            orders = [order for order in orders if int(order.id) == order_id]
+            orders = [order for order in orders if int(order.id) == int(order_id)]
             if orders:
                 # found order in current symbol pair, no need to keep iterating
                 order = orders[0]
@@ -329,63 +338,17 @@ class OkexClient(BaseExchangeClient):
                           transformation=self._transform_open_positions,
                           model_class=OkexPosition)
 
-    def close_position(self, action, amount, symbol_pair, price, order_type,
-                       amount_in_contracts=False):
-        # validate arguments
-        is_restricted_to_values(action, exchanges.ACTIONS)
-
-        is_instance(amount, (Decimal, float, int, str))
-        passes_test(amount, lambda x: Decimal(x))
-        if amount_in_contracts:
-            passes_test(amount, lambda x: Decimal(x) >= 1)
-
-        is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)
-
-        is_instance(price, (Decimal, float, int, str))
-        passes_test(price, lambda x: Decimal(x))
-
-        is_restricted_to_values(order_type, exchanges.ORDER_TYPES)
-
-        is_instance(amount_in_contracts, bool)
-
-        path = '/v1/future_trade.do'
-        symbol_pair = self.SYMBOLS_MAPPING[symbol_pair]
-        action = (self.ACTION['close_short']
-                  if action == 'sell'
-                  else self.ACTION['close_long'])
-
-        if not amount_in_contracts:
-            amount = crypto_to_contracts(
-                amount,
-                getattr(self, '{}_ticker'.format(symbol_pair)).last,
-                self.CONTRACT_UNIT_AMOUNTS[symbol_pair])
-
-        match_price = 1 if order_type == 'market' else 0
-        params = {
-            'symbol': symbol_pair,
-            'contract_type': 'quarter',
-            'price': float(Decimal(price)),
-            'match_price': match_price,  # if market, 'price' field is ignored
-            'amount': int(amount_in_contracts),
-            'type': action,
-            'lever_rate': 10,  # default
-        }
-        params['api_key'] = self.api_key
-        params['sign'] = self._sign_params(params)
-        return self._post(path, params=params, model_class=OkexOrder)
+    def close_position(self, position_id, symbol_pair):
+        raise NotImplementedError('OKEX API does not support position IDs')
 
     def close_all_positions(self, symbol_pair):
         is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)
 
         positions = self.get_open_positions(symbol_pair=symbol_pair)
-        if not positions:
-            return
-        for position in positions:
-            self.close_position(
-                action=position.action,
-                amount=str(position.amount),
-                amount_in_contracts=True,
-                symbol_pair=position.symbol_pair,
-                price=str(position.price),
-                order_type=exchanges.MARKET
-            )
+        for pos in positions:
+            # as we want to close the position,
+            # we need to performe the opposite action to the given one.
+            action = exchanges.SELL if pos.action == exchanges.BUY else exchanges.BUY
+            self.open_order(
+                action, pos.amount, pos.symbol_pair, pos.price, exchanges.MARKET,
+                amount_in_contracts=True, closing=True)

@@ -111,10 +111,10 @@ class BaseExchangeClient:
     def get_account_balance(self):
         raise NotImplementedError
 
-    def get_open_orders(self):
+    def get_open_orders(self, symbol_pair):
         raise NotImplementedError
 
-    def get_open_positions(self):
+    def get_open_positions(self, symbol_pair):
         raise NotImplementedError
 
     def get_order_status(self, order_id):
@@ -126,11 +126,11 @@ class BaseExchangeClient:
     def cancel_order(self, order_id):
         raise NotImplementedError
 
-    def cancel_all_orders(self):
+    def cancel_all_orders(self, symbol_pair):
         raise NotImplementedError
 
-    def close_position(self, action, amount, symbol_pair, price, order_type):
+    def close_position(self, position_id, symbol_pair):
         raise NotImplementedError
 
-    def close_all_positions(self):
+    def close_all_positions(self, symbol_pair):
         raise NotImplementedError

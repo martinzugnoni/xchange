@@ -49,14 +49,14 @@ class BaseClientTestCase(BaseXchangeTestCase):
             ('get_ticker', ('symbol_pair', )),
             ('get_order_book', ('symbol_pair', )),
             ('get_account_balance', ()),
-            ('get_open_orders', ()),
-            ('get_open_positions', ()),
+            ('get_open_orders', ('symbol_pair', )),
+            ('get_open_positions', ('symbol_pair', )),
             ('get_order_status', ('order_id', )),
             ('open_order', ('action', 'amount', 'symbol_pair', 'price', 'order_type')),
             ('cancel_order', ('order_id', )),
-            ('cancel_all_orders', ()),
-            ('close_position', ('action', 'amount', 'symbol_pair', 'price', 'order_type')),
-            ('close_all_positions', ()),
+            ('cancel_all_orders', ('symbol_pair', )),
+            ('close_position', ('position_id', 'symbol_pair', )),
+            ('close_all_positions', ('symbol_pair', )),
         ]
         for method, args in methods:
             with self.assertRaises(NotImplementedError):
