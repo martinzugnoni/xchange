@@ -3,7 +3,10 @@ import hmac
 import base64
 import hashlib
 from decimal import Decimal
-from urllib.parse import urlencode
+try:
+    from urllib.parse import urlencode
+except ImportError:
+     from urllib import urlencode
 
 from xchange import exceptions
 from xchange.constants import exchanges, currencies
