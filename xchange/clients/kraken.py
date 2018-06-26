@@ -25,6 +25,10 @@ class KrakenClient(BaseExchangeClient):
         currencies.BTC_USD: 'XBTUSD',
         currencies.ETH_USD: 'ETHUSD',
         currencies.LTC_USD: 'LTCUSD',
+
+        currencies.BCH_USD: 'BCHUSD',
+        currencies.XRP_USD: 'XRPUSD',
+        currencies.EOS_USD: 'EOSUSD',
     }
 
     def _sign_payload(self, urlpath, payload):

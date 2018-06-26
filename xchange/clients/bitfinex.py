@@ -21,6 +21,10 @@ class BitfinexClient(BaseExchangeClient):
         currencies.BTC_USD: 'btcusd',
         currencies.ETH_USD: 'ethusd',
         currencies.LTC_USD: 'ltcusd',
+        currencies.BCH_USD: 'bchusd',
+        currencies.XRP_USD: 'xrpusd',
+        currencies.EOS_USD: 'eosusd',
+        currencies.BTG_USD: 'btgusd',
     }
 
     def _sign_payload(self, payload):

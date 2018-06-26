@@ -20,6 +20,10 @@ class OkexClient(BaseExchangeClient):
         currencies.BTC_USD: 'btc_usd',
         currencies.ETH_USD: 'eth_usd',
         currencies.LTC_USD: 'ltc_usd',
+        currencies.BCH_USD: 'bch_usd',
+        currencies.XRP_USD: 'xrp_usd',
+        currencies.EOS_USD: 'eos_usd',
+        currencies.BTG_USD: 'btg_usd',
     }
     ORDER_STATUS = {
         'unfilled': 1,
@@ -35,6 +39,10 @@ class OkexClient(BaseExchangeClient):
         'btc_usd': 100,
         'eth_usd': 10,
         'ltc_usd': 10,
+        'bch_usd': 10,
+        'xrp_usd': 10,
+        'eos_usd': 10,
+        'btg_usd': 10,
     }
 
     def _sign_params(self, params):
