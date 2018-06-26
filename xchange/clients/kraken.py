@@ -25,6 +25,10 @@ class KrakenClient(BaseExchangeClient):
         currencies.BTC_USD: 'XBTUSD',
         currencies.ETH_USD: 'ETHUSD',
         currencies.LTC_USD: 'LTCUSD',
+
+        currencies.BCH_USD: 'BCHUSD',
+        currencies.XRP_USD: 'XRPUSD',
+        currencies.EOS_USD: 'EOSUSD',
     }
 
     def _sign_payload(self, urlpath, payload):
@@ -199,12 +203,13 @@ class KrakenClient(BaseExchangeClient):
         data = self._post(path, headers=headers, body=payload,
                           transformation=self._transform_account_balance,
                           model_class=KrakenAccountBalance)
+
         if symbol is None:
             return data
         for symbol_balance in data:
             if symbol_balance.symbol == symbol:
                 return symbol_balance
-        raise self.ERROR_CLASS('Symbol "{}" was not found in the account balance'.format(symbol))
+        return self._empty_account_balance(symbol)
 
     def get_open_orders(self, symbol_pair):
         is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)

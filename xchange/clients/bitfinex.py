@@ -21,6 +21,10 @@ class BitfinexClient(BaseExchangeClient):
         currencies.BTC_USD: 'btcusd',
         currencies.ETH_USD: 'ethusd',
         currencies.LTC_USD: 'ltcusd',
+        currencies.BCH_USD: 'bchusd',
+        currencies.XRP_USD: 'xrpusd',
+        currencies.EOS_USD: 'eosusd',
+        currencies.BTG_USD: 'btgusd',
     }
 
     def _sign_payload(self, payload):
@@ -85,7 +89,7 @@ class BitfinexClient(BaseExchangeClient):
         for symbol_balance in data:
             if symbol_balance.symbol == symbol:
                 return symbol_balance
-        raise self.ERROR_CLASS('Symbol "{}" was not found in the account balance'.format(symbol))
+        return self._empty_account_balance(symbol)
 
     def get_open_orders(self, symbol_pair):
         is_restricted_to_values(symbol_pair, currencies.SYMBOL_PAIRS)

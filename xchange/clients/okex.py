@@ -20,6 +20,10 @@ class OkexClient(BaseExchangeClient):
         currencies.BTC_USD: 'btc_usd',
         currencies.ETH_USD: 'eth_usd',
         currencies.LTC_USD: 'ltc_usd',
+        currencies.BCH_USD: 'bch_usd',
+        currencies.XRP_USD: 'xrp_usd',
+        currencies.EOS_USD: 'eos_usd',
+        currencies.BTG_USD: 'btg_usd',
     }
     ORDER_STATUS = {
         'unfilled': 1,
@@ -35,6 +39,10 @@ class OkexClient(BaseExchangeClient):
         'btc_usd': 100,
         'eth_usd': 10,
         'ltc_usd': 10,
+        'bch_usd': 10,
+        'xrp_usd': 10,
+        'eos_usd': 10,
+        'btg_usd': 10,
     }
 
     def _sign_params(self, params):
@@ -44,22 +52,7 @@ class OkexClient(BaseExchangeClient):
         data = sign + 'secret_key=' + self.api_secret
         return hashlib.md5(data.encode("utf8")).hexdigest().upper()
 
-    # FIXME: Try to find a better way of caching ticker responses
-    #        without duplicating properties for each symbol_pair
-    @cached_property_with_ttl(ttl=60)  # cache invalidates after 1 minute
-    def btc_usd_ticker(self):
-        return self.get_ticker(currencies.BTC_USD)
-
-    @cached_property_with_ttl(ttl=60)
-    def eth_usd_ticker(self):
-        return self.get_ticker(currencies.ETH_USD)
-
-    @cached_property_with_ttl(ttl=60)
-    def ltc_usd_ticker(self):
-        return self.get_ticker(currencies.LTC_USD)
-
     # transformation functions
-
     def _transform_account_balance(self, json_response):
         """
         Original JSON response:
@@ -360,3 +353,11 @@ class OkexClient(BaseExchangeClient):
             self.open_order(
                 action, pos.amount, pos.symbol_pair, pos.price, exchanges.MARKET,
                 amount_in_contracts=True, closing=True)
+
+
+# OkexClient.btc_usd_ticker = cached_property_with_ttl(ttl=60)(lambda self: self.get_ticker(currencies.BTC_USD))
+for symbol_pair in OkexClient.SYMBOLS_MAPPING:
+    attr_name = '{}_ticker'.format(symbol_pair)
+    fun = lambda self: self.get_ticker(symbol_pair)
+    fun.__name__ = attr_name
+    setattr(OkexClient, attr_name, cached_property_with_ttl(ttl=60)(fun))
