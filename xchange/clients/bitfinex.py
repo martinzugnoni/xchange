@@ -20,6 +20,7 @@ class BitfinexClient(BaseExchangeClient):
     SYMBOLS_MAPPING = {
         currencies.BTC_USD: 'btcusd',
         currencies.ETH_USD: 'ethusd',
+        currencies.ETC_USD: 'etcusd',
         currencies.LTC_USD: 'ltcusd',
         currencies.BCH_USD: 'bchusd',
         currencies.XRP_USD: 'xrpusd',

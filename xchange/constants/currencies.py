@@ -39,6 +39,7 @@ SYMBOL_VARIANTS = {
 
 BTC_USD = '{}_{}'.format(BTC, USD)
 ETH_USD = '{}_{}'.format(ETH, USD)
+ETC_USD = '{}_{}'.format(ETC, USD)
 LTC_USD = '{}_{}'.format(LTC, USD)
 BCH_USD = '{}_{}'.format(BCH, USD)
 XRP_USD = '{}_{}'.format(XRP, USD)
@@ -48,6 +49,7 @@ BTG_USD = '{}_{}'.format(BTG, USD)
 SYMBOL_PAIRS = [
     BTC_USD,
     ETH_USD,
+    ETC_USD,
     LTC_USD,
     BCH_USD,
     XRP_USD,
@@ -62,4 +64,5 @@ SYMBOL_PAIR_VARIANTS = {
     XRP_USD: ('xrpusd', ),
     EOS_USD: ('eosusd', ),
     BTG_USD: ('btgusd', ),
+    ETC_USD: ('etcusd', ),
 }
