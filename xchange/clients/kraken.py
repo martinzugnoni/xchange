@@ -24,6 +24,7 @@ class KrakenClient(BaseExchangeClient):
     SYMBOLS_MAPPING = {
         currencies.BTC_USD: 'XBTUSD',
         currencies.ETH_USD: 'ETHUSD',
+        currencies.ETC_USD: 'ETCUSD',
         currencies.LTC_USD: 'LTCUSD',
 
         currencies.BCH_USD: 'BCHUSD',

@@ -19,6 +19,7 @@ class OkexClient(BaseExchangeClient):
     SYMBOLS_MAPPING = {
         currencies.BTC_USD: 'btc_usd',
         currencies.ETH_USD: 'eth_usd',
+        currencies.ETC_USD: 'etc_usd',
         currencies.LTC_USD: 'ltc_usd',
         currencies.BCH_USD: 'bch_usd',
         currencies.XRP_USD: 'xrp_usd',
@@ -38,6 +39,7 @@ class OkexClient(BaseExchangeClient):
     CONTRACT_UNIT_AMOUNTS = {
         'btc_usd': 100,
         'eth_usd': 10,
+        'etc_usd': 10,
         'ltc_usd': 10,
         'bch_usd': 10,
         'xrp_usd': 10,
