@@ -7,7 +7,7 @@ xchange: Many cryptocurrency exchange APIs, a single and unified API client.
 """
 
 __title__ = 'xchange'
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 __build__ = 0x00001
 __author__ = 'Martin Zugnoni'
 __license__ = 'MIT'
