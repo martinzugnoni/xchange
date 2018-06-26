@@ -1,4 +1,5 @@
 import requests
+from decimal import Decimal
 try:
     from urllib.parse import urlencode
 except ImportError:
@@ -97,6 +98,9 @@ class BaseExchangeClient:
         else:
             data = model_class(data)
         return data
+
+    def _empty_account_balance(self, symbol):
+        return {'symbol': symbol, 'amount': Decimal('0')}
 
     # public endpoints
 
