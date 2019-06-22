@@ -1,32 +1,17 @@
-from setuptools import setup
-from setuptools.command.test import test as TestCommand
-
+import setuptools
 import xchange
 
 
-class PyTest(TestCommand):
-    user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
-
-    def initialize_options(self):
-        TestCommand.initialize_options(self)
-        self.pytest_args = ["--cov", "xchange", "tests/"]
-
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        #import here, cause outside the eggs aren't loaded
-        import sys, pytest
-        errno = pytest.main(self.pytest_args)
-        sys.exit(errno)
+with open("README.md", "r") as fh:
+    long_description = fh.read()
 
 
-setup(
+setuptools.setup(
     name='xchange',
     version=xchange.__version__,
     description=("Many cryptocurrency exchange APIs, a single and unified API client"),
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     url='https://github.com/martinzugnoni/xchange',
     download_url=(
         "https://github.com/martinzugnoni/xchange/tarball/{version}".format(
@@ -34,24 +19,11 @@ setup(
     author='Martin Zugnoni',
     author_email='martin.zugnoni@gmail.com',
     license='MIT',
-    packages=[
-        'xchange',
-        'xchange.clients',
-        'xchange.constants',
-        'xchange.models'
-    ],
+    packages=setuptools.find_packages(),
     maintainer='Martin Zugnoni',
-    install_requires=[
-        'requests==2.18.4',
-        'cached-property==1.4.2',
+    classifiers=[
+        'Programming Language :: Python :: 3',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: OS Independent',
     ],
-    tests_require=[
-        'requests==2.18.4',
-        'cached-property==1.4.2',
-        'pytest==3.5.1',
-        'pytest-cov==2.5.1',
-        'responses==0.9.0',
-    ],
-    zip_safe=False,
-    cmdclass={'test': PyTest},
 )
