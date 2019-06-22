@@ -2,6 +2,7 @@
 class BaseXchangeException(Exception):
     pass
 
+
 class InvalidSymbolException(BaseXchangeException):
     pass
 
@@ -34,8 +35,11 @@ class InsufficientMarketDepth(BaseXchangeException):
     pass
 
 
-# exchange exceptions
+class TimeoutException(BaseXchangeException):
+    pass
 
+
+# exchange exceptions
 class BitfinexException(BaseXchangeException):
     pass
 

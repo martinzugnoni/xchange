@@ -1,4 +1,5 @@
 import requests
+from requests.adapters import HTTPAdapter
 from decimal import Decimal
 try:
     from urllib.parse import urlencode
@@ -9,6 +10,8 @@ try:
 except ImportError:
     JSONDecodeError = ValueError
 
+from .. import exceptions
+
 
 class BaseExchangeClient:
 
@@ -17,7 +20,7 @@ class BaseExchangeClient:
         self.api_secret = api_secret
 
     def _get(self, path, headers=None, params=None,
-             transformation=None, model_class=None):
+             transformation=None, model_class=None, **kwargs):
         if params:
             path += '?' + urlencode(params)
         return self._request(
@@ -25,11 +28,11 @@ class BaseExchangeClient:
             path=path,
             headers=headers,
             model_class=model_class,
-            transformation=transformation
+            transformation=transformation, **kwargs
         )
 
     def _post(self, path, headers=None, params=None, body=None,
-              transformation=None, model_class=None):
+              transformation=None, model_class=None, **kwargs):
         if params:
             path += '?' + urlencode(params)
         if body:
@@ -40,19 +43,32 @@ class BaseExchangeClient:
             body=body,
             headers=headers,
             model_class=model_class,
-            transformation=transformation
+            transformation=transformation, **kwargs
         )
 
     def _request(self, method, path, headers=None, body=None,
-                 transformation=None, model_class=None):
+                 transformation=None, model_class=None, timeout=2,
+                 max_retries=0):
         request = requests.Request(
             method=method,
             url=self.BASE_API_URL + path,
             data=body)
         if headers:
             request.headers.update(headers)
+
         session = requests.Session()
-        response = session.send(request.prepare())
+        if max_retries:
+            adapter = HTTPAdapter(max_retries=max_retries)
+            session.mount('http://', adapter)
+            session.mount('https://', adapter)
+
+        try:
+            response = session.send(
+                request.prepare(),
+                timeout=timeout)
+        except requests.exceptions.ConnectTimeout:
+            raise exceptions.TimeoutException()
+
         return self._process_response(
             response, model_class, transformation)
 
@@ -104,37 +120,38 @@ class BaseExchangeClient:
 
     # public endpoints
 
-    def get_ticker(self, symbol_pair):
+    def get_ticker(self, symbol_pair, **kwargs):
         raise NotImplementedError
 
-    def get_order_book(self, symbol_pair):
+    def get_order_book(self, symbol_pair, **kwargs):
         raise NotImplementedError
 
     # authenticated endpoints
 
-    def get_account_balance(self, symbol=None):
+    def get_account_balance(self, symbol=None, **kwargs):
         raise NotImplementedError
 
-    def get_open_orders(self, symbol_pair):
+    def get_open_orders(self, symbol_pair, **kwargs):
         raise NotImplementedError
 
-    def get_open_positions(self, symbol_pair):
+    def get_open_positions(self, symbol_pair, **kwargs):
         raise NotImplementedError
 
-    def get_order_status(self, order_id):
+    def get_order_status(self, order_id, **kwargs):
         raise NotImplementedError
 
-    def open_order(self, action, amount, symbol_pair, price, order_type):
+    def open_order(self, action, amount, symbol_pair,
+                   price, order_type, **kwargs):
         raise NotImplementedError
 
-    def cancel_order(self, order_id):
+    def cancel_order(self, order_id, **kwargs):
         raise NotImplementedError
 
-    def cancel_all_orders(self, symbol_pair):
+    def cancel_all_orders(self, symbol_pair, **kwargs):
         raise NotImplementedError
 
-    def close_position(self, position_id, symbol_pair):
+    def close_position(self, position_id, symbol_pair, **kwargs):
         raise NotImplementedError
 
-    def close_all_positions(self, symbol_pair):
+    def close_all_positions(self, symbol_pair, **kwargs):
         raise NotImplementedError
