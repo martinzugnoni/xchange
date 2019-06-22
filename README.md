@@ -4,6 +4,14 @@
 
 Many cryptocurrency exchange APIs, a single and unified API client 🙌
 
+## Installation
+
+The project is hosted in PyPi, and you can install it using `pip` or `pip3`:
+
+```
+pip3 install xchange
+```
+
 ## Example of usage
 
 ```python
