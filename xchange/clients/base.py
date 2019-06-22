@@ -47,7 +47,7 @@ class BaseExchangeClient:
         )
 
     def _request(self, method, path, headers=None, body=None,
-                 transformation=None, model_class=None, timeout=2,
+                 transformation=None, model_class=None, timeout=3,
                  max_retries=0):
         request = requests.Request(
             method=method,

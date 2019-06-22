@@ -22,7 +22,7 @@ class BitfinexClient(BaseExchangeClient):
         currencies.ETH_USD: 'ethusd',
         currencies.ETC_USD: 'etcusd',
         currencies.LTC_USD: 'ltcusd',
-        currencies.BCH_USD: 'bchusd',
+        currencies.BCH_USD: 'babusd', # Bitcoin Cash ABC
         currencies.XRP_USD: 'xrpusd',
         currencies.EOS_USD: 'eosusd',
         currencies.BTG_USD: 'btgusd',
